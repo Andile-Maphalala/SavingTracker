@@ -1,9 +1,36 @@
+using Mapster;
+using MapsterMapper;
+using MudBlazor.Services;
+using SavingTracker.ApiClient;
 using SavingTracker.UI.Client.Pages;
 using SavingTracker.UI.Components;
+using SavingTracker.UI.Services;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddMudServices();
+builder.Services.ConfigureServices();
+var typeAdapterConfig = TypeAdapterConfig.GlobalSettings;
+// scans the assembly and gets the IRegister, adding the registration to the TypeAdapterConfig
+typeAdapterConfig.Scan(Assembly.GetExecutingAssembly());
+// register the mapper as Singleton service for my application
+var mapperConfig = new Mapper(typeAdapterConfig);
+builder.Services.AddSingleton<IMapper>(mapperConfig);
+builder.Services.AddScoped(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var baseUrl = configuration["ApiBaseUrl"];
+    var httpClient = new HttpClient { BaseAddress = new Uri(baseUrl) };
+    return new SavingTrackerApiClient(httpClient);
+});
+
+
+
+
+
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
