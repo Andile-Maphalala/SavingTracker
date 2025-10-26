@@ -1,0 +1,3 @@
+﻿SavingTracker.ApiClient
+SavingTrackerApiClient
+/operationGenerationMode:SingleClientFromPathSegments /useBaseUrl:false /dateType:DateTime /dateTimeType:DateTime /excludedTypeNames:ValidationResult,DataTypeEnum,TimeSpan
