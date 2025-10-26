@@ -6,7 +6,7 @@ namespace SavingTraker.App.Interfaces
     {
        Task<List<MemberModel>> GetAll(CancellationToken cancellationToken);
        Task<MemberModel?> GetById(int Id, CancellationToken cancellationToken);
-       Task<int> UpSert(MemberModel dto, CancellationToken cancellationToken);
+       Task<int> UpSert(MemberModel model, CancellationToken cancellationToken);
        Task<int> Delete(int Id, CancellationToken cancellationToken);
        Task<List<int>> BulkUpsert(List<MemberModel> dtos, CancellationToken cancellationToken);
     }

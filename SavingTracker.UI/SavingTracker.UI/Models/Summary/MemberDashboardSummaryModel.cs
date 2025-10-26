@@ -9,6 +9,6 @@ namespace SavingTracker.UI.Models.Summary
         public decimal OustandingAmount { get; set; }
         public int PeriodsPaid { get; set; }
         public decimal PeriodFee { get; set; }
-        public List<ContributionSummaryDto> AllContributions { get; set; }
+        public List<ContributionSummaryModel> AllContributions { get; set; }
     }
 }

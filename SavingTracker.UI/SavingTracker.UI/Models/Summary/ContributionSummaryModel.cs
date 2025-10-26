@@ -2,7 +2,7 @@
 
 namespace SavingTracker.UI.Models.Summary
 {
-    public class ContributionSummaryDto
+    public class ContributionSummaryModel
     {
         public int Id { get; set; }
         public DateTime Date { get; set; }
