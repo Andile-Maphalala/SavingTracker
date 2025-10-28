@@ -5,6 +5,7 @@ using SavingTracker.ApiClient;
 using SavingTracker.UI.Client.Pages;
 using SavingTracker.UI.Components;
 using SavingTracker.UI.Services;
+using SavingTracker.UI.Services.Interfaces;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,7 +27,7 @@ builder.Services.AddScoped(sp =>
     return new SavingTrackerApiClient(httpClient);
 });
 
-
+builder.Services.AddSingleton<AppCancellationService>();
 
 
 

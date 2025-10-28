@@ -1,69 +1,105 @@
 ﻿@using System.ComponentModel.DataAnnotations
 @using System.Reflection
 @using MudBlazor
+@using SavingTracker.UI.Models.Common
+@using SavingTracker.UI.Models.Enums
 @typeparam TItem
 
-<MudTable Items="Items"
-          Dense="Dense"
-          Hover="Hover"
-          Bordered="Bordered"
-          Striped="Striped"
-          Filter="DynamicFilter">
-    <HeaderContent>
-        @foreach (var column in VisibleColumns)
-        {
-            <MudTh>@column.DisplayName</MudTh>
-        }
-    </HeaderContent>
-    <ToolBarContent>
-        <MudGrid>
-            <MudItem xs="12" sm="9">
-                @if (OnAdd.HasDelegate)
-                {
-                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" OnClick="OnAdd">Add</MudButton>
-                }
-            </MudItem>
-            <MudItem xs="12" sm="3">
-                <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            </MudItem>
-        </MudGrid>
-            
-    </ToolBarContent>
-    <RowTemplate>
-        @foreach (var column in VisibleColumns)
-        {
-            <MudTd>@(column.PropertyInfo.GetValue(context))</MudTd>
-        }
-        @if (CrudColumn != null)
-        {
-            @foreach (var c in CrudColumn)
+
+@if (IsLoading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+else
+{
+    <MudTable Items="Data"
+              Dense="Dense"
+              Hover="Hover"
+              Bordered="Bordered"
+              Striped="Striped"
+              Filter="DynamicFilter">
+        <HeaderContent>
+            @foreach (var column in VisibleColumns)
             {
-                <MudTd>@c(context)</MudTd>
+                <MudTh>@column.DisplayName</MudTh>
             }
-        }
-    </RowTemplate>
-</MudTable>
+        </HeaderContent>
+        <ToolBarContent>
+            <MudGrid>
+                <MudItem xs="12" sm="9">
+                    @if (ShouldShowAction(FormModeEnum.Create))
+                    {
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add">Add</MudButton>
+                    }
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </MudItem>
+            </MudGrid>
+
+        </ToolBarContent>
+        <RowTemplate>
+            @foreach (var column in VisibleColumns)
+            {
+                <MudTd>
+                    @if (!string.IsNullOrEmpty(column.FormatString))
+                    {
+                        @string.Format(column.FormatString, column.PropertyInfo.GetValue(context))
+                    }
+                    else
+                    {
+                        @column.PropertyInfo.GetValue(context)
+                    }
+                </MudTd>
+            }
+            @if (CrudColumn != null)
+            {
+                <MudTd Style="width:1%;">
+                    <MudStack Row="true" Spacing="1">
+                        @foreach (var c in CrudColumn)
+                        {
+                            @c(context)
+                        }
+                    </MudStack>
+                </MudTd>
+
+            }
+        </RowTemplate>
+    </MudTable>
+}
+
 
 @code {
-    [Parameter] public IEnumerable<TItem>? Items { get; set; }
+
+    [Parameter]
+    public Func<Task<List<TItem>>>? LoadData { get; set; }
+
+    [Parameter] 
+    public IEnumerable<TItem>? Data { get; set; }
 
     [Parameter] 
     public bool Dense { get; set; } = true;
+
     [Parameter] 
     public bool Hover { get; set; } = true;
+
     [Parameter] 
     public bool Bordered { get; set; } = true;
+
     [Parameter] 
     public bool Striped { get; set; } = true;
-    [Parameter] 
-    public EventCallback<TItem> OnEdit { get; set; }
-    [Parameter] 
-    public EventCallback<TItem> OnView { get; set; }
-    [Parameter] 
-    public EventCallback OnAdd{ get; set; }
-    [Parameter] 
-    public EventCallback<TItem> OnDelete { get; set; }
 
+    [Parameter]
+    public List<AutotableActionVisibilityModel> ActionVisibilities { get; set; } = new List<AutotableActionVisibilityModel>();
+
+    [Parameter]
+    public bool ShowAllActions { get; set; } = true;
+
+    [Parameter] 
+    public EventCallback<ActionModel<TItem>> OnAction { get; set; }
+
+
+    private bool IsLoading { get; set; } = true;
 
     private string searchString { get; set; } = string.Empty;
 
@@ -72,9 +108,10 @@
     private List<RenderFragment<TItem>> CrudColumn { get; set; } = default!;
 
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        // Reflect model properties
+
+        await RefreshTable();
         VisibleColumns = typeof(TItem)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(p => new ColumnDefinition(p))
@@ -91,7 +128,40 @@
             .Select(c => c.PropertyInfo)
             .ToList();
 
+        if (ShowAllActions)
+        {
+            ActionVisibilities.Clear();
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Create, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.View, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Update, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Delete, IsVisible = true });
+
+        }
         AddCrudColumnButtons();
+        IsLoading = false;
+
+    }
+
+    public async Task RefreshTable()
+    {
+        if (LoadData != null)
+        {
+            try
+            {
+                IsLoading = true;
+                Data = await LoadData.Invoke();
+            }
+            catch (Exception ex)
+            {
+
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private bool DynamicFilter(TItem item)
@@ -114,37 +184,22 @@
         return false;
     }
 
-    private class ColumnDefinition
+    private async Task Add()
     {
-        public PropertyInfo PropertyInfo { get; }
-        public string DisplayName { get; }
-        public int Order { get; }
-        public bool Visible { get; }
-
-        public ColumnDefinition(PropertyInfo property)
-        {
-            PropertyInfo = property;
-
-            var displayAttr = property.GetCustomAttribute<DisplayAttribute>();
-            var scaffoldAttr = property.GetCustomAttribute<ScaffoldColumnAttribute>();
-
-            DisplayName = displayAttr?.Name ?? property.Name;
-            Order = displayAttr?.GetOrder() ?? 0;
-            Visible = scaffoldAttr?.Scaffold ?? true;
-        }
+        await OnAction.InvokeAsync(new ActionModel<TItem> { Mode = FormModeEnum.Create });
     }
 
     private void AddCrudColumnButtons()
     {
         var crudColumns = new List<RenderFragment<TItem>>();
-        if (OnView.HasDelegate)
+        if (ShouldShowAction(FormModeEnum.View))
         {
             crudColumns.Add(item => builder =>
             {
                 builder.OpenComponent<MudButton>(0);
                 builder.AddAttribute(1, "Color", Color.Info);
                 builder.AddAttribute(2, "Variant", Variant.Filled);
-                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnView.InvokeAsync(item)));
+                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnAction.InvokeAsync(new ActionModel<TItem> { Item = item, Mode = FormModeEnum.View })));
                 builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Visibility);
                 builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
                 {
@@ -153,14 +208,14 @@
                 builder.CloseComponent();
             });
         }
-        if (OnEdit.HasDelegate)
+        if (ShouldShowAction(FormModeEnum.Update))
         {
             crudColumns.Add(item => builder =>
             {
                 builder.OpenComponent<MudButton>(0);
                 builder.AddAttribute(1, "Color", Color.Primary);
                 builder.AddAttribute(2, "Variant", Variant.Filled);
-                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, (MouseEventArgs e) => OnEdit.InvokeAsync(item)));
+                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, (MouseEventArgs e) => OnAction.InvokeAsync(new ActionModel<TItem> { Item = item, Mode = FormModeEnum.Update })));
                 builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Edit);
                 builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
                 {
@@ -169,14 +224,14 @@
                 builder.CloseComponent();
             });
         }
-        if (OnDelete.HasDelegate)
+        if (ShouldShowAction(FormModeEnum.Delete))
         {
             crudColumns.Add(item => builder =>
             {
                 builder.OpenComponent<MudButton>(0);
                 builder.AddAttribute(1, "Color", Color.Error);
                 builder.AddAttribute(2, "Variant", Variant.Filled);
-                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnDelete.InvokeAsync(item)));
+                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnAction.InvokeAsync(new ActionModel<TItem> { Item = item, Mode = FormModeEnum.Delete })));
                 builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Delete);
                 builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
                 {
@@ -187,6 +242,16 @@
         }
         CrudColumn = crudColumns;
 
+    }
+
+    private bool ShouldShowAction(FormModeEnum mode)
+    {
+        var visibility = ActionVisibilities.FirstOrDefault(a => a.Mode == mode);
+        if (visibility != null)
+        {
+            return visibility.IsVisible;
+        }
+        return true;
     }
 
 }

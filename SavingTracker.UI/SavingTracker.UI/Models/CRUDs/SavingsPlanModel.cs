@@ -19,9 +19,14 @@ namespace SavingTracker.UI.Models.CRUDs
         public decimal TargetAmount { get; set; }
 
         [Display(Name = "StartDate", Order = 4)]
-        public DateTime StartDate { get; set; }
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:yyyy/MM/dd}")]
+        public DateTime? StartDate { get; set; }
 
         [Display(Name = "EndDate", Order = 5)]
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:yyyy/MM/dd}")]
+
         public DateTime? EndDate { get; set; }
     }
 }

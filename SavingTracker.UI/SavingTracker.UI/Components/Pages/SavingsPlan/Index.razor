@@ -1,26 +1,24 @@
-﻿@using SavingTracker.UI.Components.CustomComponents
-@using SavingTracker.UI.Models.CRUDs
+﻿@page "/savingsplans";
+@page "/";
 
-@page "/savingsplans";
-@inject IDialogService dialogService;
+@using SavingTracker.UI.Components.CustomComponents
+@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Models.Common
+@using SavingTracker.UI.Services.Interfaces
+@using SavingTraker.App.Interfaces
+
+@inject IDialogService dialogService
+@inject ISavingsPlanService service
 
 <MudPaper Class="p-4">
-    <AutoTable TItem="SavingsPlanModel" Items="Data" OnEdit="Edit"/>
+    <AutoTable @ref="tableRef" TItem="SavingsPlanModel" OnAction="Actions" LoadData="LoadData"/>
 </MudPaper>
 
 @code {
-
+    AutoTable<SavingsPlanModel> tableRef;
     private List<SavingsPlanModel> Data = new List<SavingsPlanModel>();
-
     protected override async Task OnInitializedAsync()
     {
-        Data = new List<SavingsPlanModel>
-        {
-            new SavingsPlanModel { Id = 1, Name = "Retirement Fund", TargetAmount = 100000, StartDate = new DateTime(2020, 1, 1), EndDate = new DateTime(2040, 1, 1) },
-            new SavingsPlanModel { Id = 2, Name = "Vacation Fund", TargetAmount = 5000,  StartDate = new DateTime(2023, 6, 1), EndDate = new DateTime(2024, 6, 1) },
-            new SavingsPlanModel { Id = 3, Name = "Emergency Fund", TargetAmount = 20000, StartDate = new DateTime(2021, 3, 15), EndDate = new DateTime(2023, 3, 15) }
-        };
-
 
     }
 
@@ -30,17 +28,34 @@
         {
         }
     }
-    private async Task Edit(SavingsPlanModel item)
+    private async Task Actions(ActionModel<SavingsPlanModel> item)
     {
         var options = new DialogOptions { CloseOnEscapeKey = true };
+        if(item.Mode == Models.Enums.FormModeEnum.Create)
+        {
+            item.Item = new SavingsPlanModel();
+        }
 
-        var dialog = await dialogService.ShowAsync<Edit>("Simple Dialog", options);
+        var parameters = new DialogParameters<Edit>
+        {
+            { x => x.Model, item.Item },
+            { x => x.FormMode, item.Mode }
+        };
+
+        var dialog = await dialogService.ShowAsync<Edit>(item.Mode.ToString(), parameters, options);
         var result = await dialog.Result;
 
         if (!result.Canceled)
         {
-            
+            await tableRef?.RefreshTable();
         }
+    }
+
+    private async Task<List<SavingsPlanModel>> LoadData()
+    {
+        
+        Data = await service.GetAll(appCancellation.Token);
+        return Data;
     }
 
 
