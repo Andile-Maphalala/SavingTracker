@@ -1,0 +1,31 @@
+version: '3.9'
+name: savingtracker 
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev123
+      POSTGRES_DB: SavingTrackerDatabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: SavingTracker.API/Dockerfile
+    container_name: savingtracker-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__ConnectionString: "Host=postgres;Port=5432;Database=SavingTrackerDatabase;Username=dev;Password=dev123;SSL Mode=Disable"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
