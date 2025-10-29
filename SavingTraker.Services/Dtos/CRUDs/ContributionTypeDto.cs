@@ -6,6 +6,6 @@
         public string Name { get; set; }
         public decimal Amount { get; set; }
         public int Frequency { get; set; }
-        public string FrequencyName { get; set; }
+        public string? FrequencyName { get; set; }
     }
 }
