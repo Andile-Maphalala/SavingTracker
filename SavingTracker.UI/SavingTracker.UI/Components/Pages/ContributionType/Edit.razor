@@ -58,14 +58,5 @@
 
     private void Cancel() => MudDialog.Cancel();
 
-    private async Task<IEnumerable<LookUpModel>> Search(string value, CancellationToken token)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return Frequencies;
-        }
-
-        return Frequencies.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
-    }
 }
 

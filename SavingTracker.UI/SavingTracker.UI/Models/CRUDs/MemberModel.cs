@@ -10,6 +10,7 @@
         public string ContributionTypeName { get; set; }
         public decimal Amount { get; set; }
         public int Frequency { get; set; }
-        public int OccurrencesPerPeriod { get; set; }
+        public string FrequencyName { get; set; }
+
     }
 }

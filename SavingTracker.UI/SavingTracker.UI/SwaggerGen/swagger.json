@@ -1060,6 +1060,10 @@
           "frequency": {
             "type": "integer",
             "format": "int32"
+          },
+          "frequencyName": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1173,15 +1177,17 @@
           },
           "amount": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "frequency": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
-          "occurrencesPerPeriod": {
-            "type": "integer",
-            "format": "int32"
+          "frequencyName": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
