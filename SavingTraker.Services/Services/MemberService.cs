@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SavingTracker.Data.Context;
 using SavingTracker.Data.Enums;
 using SavingTracker.Data.Models;
+using SavingTraker.App.Common.Helpers;
 using SavingTraker.App.Dtos.CRUDs;
 using SavingTraker.App.Exceptions;
 using SavingTraker.App.Interfaces;
@@ -33,7 +34,7 @@ namespace SavingTraker.App.Services
                     ContributionTypeName = m.ContributionType.Name,
                     Amount = m.ContributionType.Amount,
                     Frequency = m.ContributionType.Frequency,
-                    FrequencyName = GetFrequencyName(m.ContributionType.Frequency)
+                    FrequencyName = m.ContributionType.Frequency.GetFrequencyName()
                 }).ToListAsync(cancellationToken);
         }
 
@@ -54,7 +55,7 @@ namespace SavingTraker.App.Services
                 ContributionTypeName = entity.ContributionType.Name,
                 Amount = entity.ContributionType.Amount,
                 Frequency = entity.ContributionType.Frequency,
-                FrequencyName = GetFrequencyName(entity.ContributionType.Frequency)
+                FrequencyName = entity.ContributionType.Frequency.GetFrequencyName()
             };
         }
 
@@ -103,12 +104,6 @@ namespace SavingTraker.App.Services
             }
 
             return ids;
-        }
-
-        private string GetFrequencyName(int frequency)
-        {
-            var enumValue = (ContributionFrequency)frequency;
-            return enumValue.ToString();
         }
     }
 }
