@@ -28,7 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Pages\Contribution\" />
     <Folder Include="Components\Pages\Dashboard\" />
   </ItemGroup>
 
