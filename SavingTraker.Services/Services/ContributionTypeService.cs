@@ -28,6 +28,7 @@ namespace SavingTraker.App.Services
                     Name = ct.Name,
                     Amount = ct.Amount,
                     Frequency = ct.Frequency,
+                    FrequencyName = GetFrequencyName(ct.Frequency)
                 }).ToListAsync(cancellationToken);
         }
 
@@ -45,6 +46,7 @@ namespace SavingTraker.App.Services
                 Name = entity.Name,
                 Amount = entity.Amount,
                 Frequency = entity.Frequency,
+                FrequencyName = GetFrequencyName(entity.Frequency)
             };
         }
 
@@ -92,6 +94,12 @@ namespace SavingTraker.App.Services
                     Id = (int)cf,
                     Name = cf.ToString()
                 }).ToList();
+        }
+
+        private string GetFrequencyName(int frequency)
+        {
+            var enumValue = (ContributionFrequency)frequency;
+            return enumValue.ToString();
         }
 
     }
