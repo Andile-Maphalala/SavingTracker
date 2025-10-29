@@ -1,6 +1,7 @@
 ﻿using MapsterMapper;
 using SavingTracker.ApiClient;
 using SavingTracker.UI.Models.CRUDs;
+using SavingTracker.UI.Models.Lookups;
 using SavingTraker.App.Interfaces;
 
 namespace SavingTracker.UI.Services
@@ -24,6 +25,13 @@ namespace SavingTracker.UI.Services
         {
             var result = await apiClient.ApiContributionTypeGetByIdAsync(Id, cancellationToken);
             var mappedResult = mapper.Map<ContributionTypeModel>(result);
+            return mappedResult;
+        }
+
+        public List<LookUpModel> GetContributionFrequenyList()
+        {
+            var result = apiClient.ApiContributionTypeGetContributionFrequenyListAsync();
+            var mappedResult = mapper.Map<List<LookUpModel>>(result.Result);
             return mappedResult;
         }
 

@@ -462,6 +462,44 @@
         }
       }
     },
+    "/api/ContributionType/GetContributionFrequenyList": {
+      "get": {
+        "tags": [
+          "ContributionType"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LookUpDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LookUpDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LookUpDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Dashboard/GetDashboardSummary": {
       "get": {
         "tags": [
@@ -1050,6 +1088,20 @@
             "items": {
               "$ref": "#/components/schemas/MemberDashboardSummaryDto"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LookUpDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
             "nullable": true
           }
         },

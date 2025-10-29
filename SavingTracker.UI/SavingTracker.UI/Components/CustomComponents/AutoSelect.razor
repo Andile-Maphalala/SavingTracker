@@ -1,0 +1,82 @@
+﻿@using SavingTracker.UI.Models.Lookups
+@using System.Linq.Expressions
+@typeparam TValue
+
+<MudSelect T="TValue"
+           Value="Value"
+           Label="@Label"
+           Variant="@Variant"
+           Dense="@Dense"
+           Margin="@Margin"
+           Disabled="@Disabled"
+           ReadOnly="@ReadOnly"
+           Clearable="@Clearable"
+           HelperText="@HelperText"
+           Placeholder="@Placeholder"
+           Adornment="@Adornment"
+           AdornmentText="@AdornmentText"
+           Class="@Class"
+           Style="@Style"
+           For="For"
+           ValueChanged="ValueChanged">
+    @if (Items != null)
+    {
+        @foreach (var item in Items)
+        {
+            <MudSelectItem Value="@((TValue)(object)item.Id)">@item.Name</MudSelectItem>
+        }
+    }
+</MudSelect>
+
+@code {
+    [Parameter] 
+    public TValue? Value { get; set; }
+
+    [Parameter]
+    public Expression<Func<TValue>> For { get; set; }
+
+    [Parameter] 
+    public EventCallback<TValue> ValueChanged { get; set; }
+
+    [Parameter] 
+    public string Label { get; set; } = string.Empty;
+    [Parameter] 
+    public IEnumerable<LookUpModel> Items { get; set; }
+
+    [Parameter] 
+    public bool Dense { get; set; } = true;
+
+    [Parameter] 
+
+    public bool Disabled { get; set; }
+
+    [Parameter] 
+    public bool ReadOnly { get; set; }
+
+    [Parameter] 
+    public bool Clearable { get; set; }
+
+    [Parameter] 
+    public string? HelperText { get; set; }
+
+    [Parameter] 
+    public string? Placeholder { get; set; }
+
+    [Parameter] 
+    public Variant Variant { get; set; } = Variant.Filled;
+
+    [Parameter] 
+    public Margin Margin { get; set; } = Margin.Dense;
+
+    [Parameter] 
+    public Adornment Adornment { get; set; } = Adornment.None;
+
+    [Parameter] 
+    public string? AdornmentText { get; set; }
+
+    [Parameter] 
+    public string? Class { get; set; }
+
+    [Parameter] 
+    public string? Style { get; set; }
+}

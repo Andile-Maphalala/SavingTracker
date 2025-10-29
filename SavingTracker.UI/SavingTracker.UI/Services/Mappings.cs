@@ -1,6 +1,7 @@
 ﻿using Mapster;
 using SavingTracker.ApiClient;
 using SavingTracker.UI.Models.CRUDs;
+using SavingTracker.UI.Models.Lookups;
 using SavingTracker.UI.Models.Summary;
 
 namespace SavingTracker.UI.Services
@@ -22,6 +23,8 @@ namespace SavingTracker.UI.Services
             config.NewConfig<DashboardSummaryModel, DashboardSummaryDto>()
                 .TwoWays();
             config.NewConfig<MemberDashboardSummaryModel, MemberDashboardSummaryDto>()
+                .TwoWays();
+            config.NewConfig<LookUpModel, LookUpDto>()
                 .TwoWays();
         }
     }

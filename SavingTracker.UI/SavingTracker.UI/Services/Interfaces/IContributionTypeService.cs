@@ -1,4 +1,5 @@
 ﻿using SavingTracker.UI.Models.CRUDs;
+using SavingTracker.UI.Models.Lookups;
 
 namespace SavingTraker.App.Interfaces
 {
@@ -8,5 +9,6 @@ namespace SavingTraker.App.Interfaces
        Task<ContributionTypeModel?> GetById(int Id, CancellationToken cancellationToken);
        Task<int> UpSert(ContributionTypeModel model, CancellationToken cancellationToken);
        Task<int> Delete(int Id, CancellationToken cancellationToken);
+       List<LookUpModel> GetContributionFrequenyList();
     }
 }
