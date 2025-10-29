@@ -10,7 +10,7 @@
 @inject IContributionService service
 
 <MudPaper Class="p-4">
-    <AutoTable @ref="tableRef" TItem="ContributionModel" OnAction="Actions" LoadData="LoadData" />
+    <AutoTable @ref="tableRef" TItem="ContributionModel" OnAction="Actions" LoadData="LoadData" ShowAllActions="true"/>
 </MudPaper>
 
 @code {
@@ -29,19 +29,38 @@
     }
     private async Task Actions(ActionModel<ContributionModel> item)
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true };
+
         if (item.Mode == Models.Enums.FormModeEnum.Create)
         {
             item.Item = new ContributionModel();
         }
 
-        var parameters = new DialogParameters<Edit>
+        IDialogReference dialog;
+        if (item.Mode == Models.Enums.FormModeEnum.BulkCreate)
         {
-            { x => x.Model, item.Item },
-            { x => x.FormMode, item.Mode }
-        };
+            var options = new DialogOptions { CloseOnEscapeKey = true,  FullWidth = true};
 
-        var dialog = await dialogService.ShowAsync<Edit>(item.Mode.ToString(), parameters, options);
+            var parameters = new DialogParameters<Bulk>
+            {
+                { x => x.FormMode, item.Mode }
+            };
+
+            dialog = await dialogService.ShowAsync<Bulk>(item.Mode.ToString(), parameters, options);
+        }
+        else
+        {
+            var options = new DialogOptions { CloseOnEscapeKey = true };
+
+            var parameters = new DialogParameters<Edit>
+            {
+                { x => x.Model, item.Item },
+                { x => x.FormMode, item.Mode }
+            };
+
+            dialog = await dialogService.ShowAsync<Edit>(item.Mode.ToString(), parameters, options);
+        }
+
+        
         var result = await dialog.Result;
 
         if (!result.Canceled)

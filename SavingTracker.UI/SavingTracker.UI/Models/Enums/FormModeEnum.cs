@@ -5,6 +5,7 @@
         Create,
         Update,
         View,
-        Delete
+        Delete,
+        BulkCreate
     }
 }

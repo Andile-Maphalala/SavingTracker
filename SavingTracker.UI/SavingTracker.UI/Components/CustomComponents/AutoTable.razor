@@ -31,6 +31,10 @@ else
                     {
                         <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add">Add</MudButton>
                     }
+                    @if (ShouldShowAction(FormModeEnum.BulkCreate))
+                    {
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="BulkAdd">Bulk Add</MudButton>
+                    }
                 </MudItem>
                 <MudItem xs="12" sm="3">
                     <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -93,7 +97,10 @@ else
     public List<AutotableActionVisibilityModel> ActionVisibilities { get; set; } = new List<AutotableActionVisibilityModel>();
 
     [Parameter]
-    public bool ShowAllActions { get; set; } = true;
+    public bool ShowAllActionsExceptBulk { get; set; } = true;
+
+    [Parameter]
+    public bool ShowAllActions { get; set; } = false;
 
     [Parameter] 
     public EventCallback<ActionModel<TItem>> OnAction { get; set; }
@@ -128,7 +135,8 @@ else
             .Select(c => c.PropertyInfo)
             .ToList();
 
-        if (ShowAllActions)
+        
+        if (ShowAllActionsExceptBulk)
         {
             ActionVisibilities.Clear();
             ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Create, IsVisible = true });
@@ -137,6 +145,16 @@ else
             ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Delete, IsVisible = true });
 
         }
+        if (ShowAllActions)
+        {
+            ActionVisibilities.Clear();
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Create, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.View, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Update, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Delete, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.BulkCreate, IsVisible = true });
+        }
+
         AddCrudColumnButtons();
         IsLoading = false;
 
@@ -187,6 +205,11 @@ else
     private async Task Add()
     {
         await OnAction.InvokeAsync(new ActionModel<TItem> { Mode = FormModeEnum.Create });
+    }
+
+    private async Task BulkAdd()
+    {
+        await OnAction.InvokeAsync(new ActionModel<TItem> { Mode = FormModeEnum.BulkCreate });
     }
 
     private void AddCrudColumnButtons()
@@ -251,7 +274,7 @@ else
         {
             return visibility.IsVisible;
         }
-        return true;
+        return false;
     }
 
 }
