@@ -18,7 +18,8 @@
            Class="@Class"
            Style="@Style"
            For="For"
-           ValueChanged="ValueChanged">
+           ValueChanged="ValueChanged"
+           ToStringFunc="GetDisplayText">
     @if (Items != null)
     {
         @foreach (var item in Items)
@@ -79,4 +80,13 @@
 
     [Parameter] 
     public string? Style { get; set; }
+
+    private string GetDisplayText(TValue value)
+    {
+        if (Items == null)
+            return value?.ToString() ?? string.Empty;
+
+        var match = Items.FirstOrDefault(x => x.Id.Equals(value));
+        return match?.Name ?? value?.ToString() ?? string.Empty;
+    }
 }
