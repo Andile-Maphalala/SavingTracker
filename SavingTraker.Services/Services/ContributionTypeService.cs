@@ -1,8 +1,10 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using SavingTracker.Data.Context;
+using SavingTracker.Data.Enums;
 using SavingTracker.Data.Models;
 using SavingTraker.App.Dtos.CRUDs;
+using SavingTraker.App.Dtos.Lookup;
 using SavingTraker.App.Exceptions;
 using SavingTraker.App.Interfaces;
 
@@ -80,6 +82,16 @@ namespace SavingTraker.App.Services
             _db.ContributionTypes.Remove(entity);
             return await _db.SaveChangesAsync(cancellationToken);
 
+        }
+
+        public List<LookUpDto> GetContributionFrequenyList()
+        {
+            return Enum.GetValues<ContributionFrequency>()
+                .Select(cf => new LookUpDto
+                {
+                    Id = (int)cf,
+                    Name = cf.ToString()
+                }).ToList();
         }
 
     }

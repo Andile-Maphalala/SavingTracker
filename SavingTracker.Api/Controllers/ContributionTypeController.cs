@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SavingTraker.App.Dtos.CRUDs;
+using SavingTraker.App.Dtos.Lookup;
 using SavingTraker.App.Interfaces;
+using System.Threading;
 
 namespace SavingTracker.Api.Controllers
 {
@@ -33,6 +35,13 @@ namespace SavingTracker.Api.Controllers
         public async Task<ActionResult<int>> Delete(int id, CancellationToken cancellationToken)
         {
             var result = await service.Delete(id, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet(nameof(GetContributionFrequenyList))]
+        public ActionResult<List<LookUpDto>> GetContributionFrequenyList()
+        {
+            var result = service.GetContributionFrequenyList();
             return Ok(result);
         }
     }
