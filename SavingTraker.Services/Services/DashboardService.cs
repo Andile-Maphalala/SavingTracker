@@ -169,7 +169,7 @@ namespace SavingTraker.App.Services
         private int GetTotalPeriods(DateTime startDate, ContributionFrequency frequency)
         {
             var currentDate = DateTime.Now;
-            if(currentDate > startDate)
+            if(currentDate < startDate)
             {
                 return 0;
             }
@@ -177,19 +177,19 @@ namespace SavingTraker.App.Services
             switch (frequency)
             {
                 case ContributionFrequency.Daily:
-                    return (DateTime.Now - startDate).Days;
+                    return (currentDate - startDate).Days;
                 case ContributionFrequency.Weekly:
-                    return (DateTime.Now - startDate).Days / 7;
+                    return (currentDate - startDate).Days / 7;
                 case ContributionFrequency.BiWeekly:
-                    return (DateTime.Now - startDate).Days / 14;
+                    return (currentDate - startDate).Days / 14;
                 case ContributionFrequency.Monthly:
-                    return ((DateTime.Now.Year - startDate.Year) * 12) + DateTime.Now.Month - startDate.Month;
+                    return ((currentDate.Year - startDate.Year) * 12) + currentDate.Month - startDate.Month;
                 case ContributionFrequency.Quarterly:
-                    return (((DateTime.Now.Year - startDate.Year) * 12) + DateTime.Now.Month - startDate.Month) / 3;
+                    return (((currentDate.Year - startDate.Year) * 12) + currentDate.Month - startDate.Month) / 3;
                 case ContributionFrequency.SemiAnnual:
-                    return(((DateTime.Now.Year - startDate.Year) * 12) + DateTime.Now.Month - startDate.Month) / 6;
+                    return(((currentDate.Year - startDate.Year) * 12) + currentDate.Month - startDate.Month) / 6;
                 case ContributionFrequency.Yearly:
-                    return DateTime.Now.Year - startDate.Year;
+                    return currentDate.Year - startDate.Year;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(frequency), frequency, "Unsupported contribution frequency");
             }
