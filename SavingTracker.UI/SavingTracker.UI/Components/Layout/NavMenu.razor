@@ -1,9 +1,25 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">SavingTracker.UI</a>
+﻿@using SavingTracker.UI.Services
+@inject AuthService Auth
+@inject NavigationManager NavManager
+
+
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        @if (Auth.IsLoggedIn)
+        {
+            <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="Logout">
+                Logout (@Auth.CurrentUser)
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Login">
+                Login
+            </MudButton>
+        }
     </div>
 </div>
-
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
@@ -30,3 +46,15 @@
     </nav>
 </div>
 
+@code {
+    private void Login()
+    {
+        NavManager.NavigateTo("/login");
+    }
+
+    private void Logout()
+    {
+        Auth.Logout();
+        NavManager.NavigateTo("/", true);
+    }
+}

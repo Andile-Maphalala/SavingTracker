@@ -10,7 +10,7 @@
 @inject IMemberService service
 
 <MudPaper Class="p-4">
-    <AutoTable @ref="tableRef" TItem="MemberModel" OnAction="Actions" LoadData="LoadData" />
+    <AutoTable @ref="tableRef" TItem="MemberModel" OnAction="Actions" LoadData="LoadData" IsAdmin="authService.IsLoggedIn" />
 </MudPaper>
 
 @code {

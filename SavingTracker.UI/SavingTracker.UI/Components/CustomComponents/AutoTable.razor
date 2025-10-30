@@ -3,8 +3,8 @@
 @using MudBlazor
 @using SavingTracker.UI.Models.Common
 @using SavingTracker.UI.Models.Enums
+@using SavingTracker.UI.Services
 @typeparam TItem
-
 
 @if (IsLoading)
 {
@@ -27,11 +27,11 @@ else
         <ToolBarContent>
             <MudGrid>
                 <MudItem xs="12" sm="9">
-                    @if (ShouldShowAction(FormModeEnum.Create))
+                    @if (ShouldShowAction(FormModeEnum.Create) && IsAdmin)
                     {
                         <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add">Add</MudButton>
                     }
-                    @if (ShouldShowAction(FormModeEnum.BulkCreate))
+                    @if (ShouldShowAction(FormModeEnum.BulkCreate) && IsAdmin)
                     {
                         <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="BulkAdd">Bulk Add</MudButton>
                     }
@@ -104,6 +104,9 @@ else
 
     [Parameter] 
     public EventCallback<ActionModel<TItem>> OnAction { get; set; }
+
+    [Parameter]
+    public bool IsAdmin { get; set; } = false;
 
 
     private bool IsLoading { get; set; } = true;
@@ -231,7 +234,7 @@ else
                 builder.CloseComponent();
             });
         }
-        if (ShouldShowAction(FormModeEnum.Update))
+        if (ShouldShowAction(FormModeEnum.Update) && IsAdmin)
         {
             crudColumns.Add(item => builder =>
             {
@@ -247,7 +250,7 @@ else
                 builder.CloseComponent();
             });
         }
-        if (ShouldShowAction(FormModeEnum.Delete))
+        if (ShouldShowAction(FormModeEnum.Delete) && IsAdmin)
         {
             crudColumns.Add(item => builder =>
             {

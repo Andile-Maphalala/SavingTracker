@@ -45,7 +45,7 @@
                 <TotalNumber Total="Data.TotalPeriods" Description="Total Periods" ComponentColor="@Colors.Cyan.Default"  Icon="@Icons.Material.Filled.CalendarMonth"/>
             </MudItem>
             <MudItem xs="12" sm="12" md="12">
-                <AutoTable @ref="tableRef" TItem="MemberDashboardSummaryModel" OnAction="Actions" LoadData="LoadData" ShowAllActionsExceptBulk="false" ActionVisibilities="ActionVisibilities"/>
+                <AutoTable @ref="tableRef" TItem="MemberDashboardSummaryModel" OnAction="Actions" LoadData="LoadData" ShowAllActionsExceptBulk="false" ActionVisibilities="ActionVisibilities" IsAdmin="authService.IsLoggedIn"/>
             </MudItem>
         }
 

@@ -10,7 +10,7 @@
 @inject ISavingsPlanService service
 
 <MudPaper Class="p-4">
-    <AutoTable @ref="tableRef" TItem="SavingsPlanModel" OnAction="Actions" LoadData="LoadData"/>
+    <AutoTable @ref="tableRef" TItem="SavingsPlanModel" OnAction="Actions" LoadData="LoadData" IsAdmin="authService.IsLoggedIn" />
 </MudPaper>
 @code {
     AutoTable<SavingsPlanModel> tableRef;

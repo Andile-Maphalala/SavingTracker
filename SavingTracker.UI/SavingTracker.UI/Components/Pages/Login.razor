@@ -1,0 +1,34 @@
+﻿@page "/login"
+@using SavingTracker.UI.Services
+@inject NavigationManager NavManager;
+@inject AuthService Auth
+
+<MudPaper Class="pa-4 mx-auto" Style="width:300px">
+    <MudTextField @bind-Value="Username" Label="Username" />
+    <MudTextField @bind-Value="Password" Label="Password" InputType="InputType.Password" />
+    <MudButton OnClick="OnLogin" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2">Login</MudButton>
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <MudText Color="Color.Error">@ErrorMessage</MudText>
+    }
+</MudPaper>
+
+    @code {
+
+    private string Username;
+    private string Password;
+    private string ErrorMessage;
+
+    private void OnLogin()
+    {
+        if (!Auth.Login(Username, Password))
+        {
+            ErrorMessage = "Invalid credentials";
+        }
+        else
+        {
+
+            NavManager.NavigateTo("/", true);
+        }
+    }
+}

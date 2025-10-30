@@ -2,7 +2,6 @@ using Mapster;
 using MapsterMapper;
 using MudBlazor.Services;
 using SavingTracker.ApiClient;
-using SavingTracker.UI.Client.Pages;
 using SavingTracker.UI.Components;
 using SavingTracker.UI.Services;
 using SavingTracker.UI.Services.Interfaces;
@@ -28,6 +27,7 @@ builder.Services.AddScoped(sp =>
 });
 
 builder.Services.AddSingleton<AppCancellationService>();
+builder.Services.AddSingleton<AuthService>();
 
 
 

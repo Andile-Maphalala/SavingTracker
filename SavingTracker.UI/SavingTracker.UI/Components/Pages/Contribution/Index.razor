@@ -3,14 +3,16 @@
 @using SavingTracker.UI.Components.CustomComponents
 @using SavingTracker.UI.Models.CRUDs
 @using SavingTracker.UI.Models.Common
+@using SavingTracker.UI.Services
 @using SavingTracker.UI.Services.Interfaces
 @using SavingTraker.App.Interfaces
 
 @inject IDialogService dialogService
 @inject IContributionService service
+@inject AuthService authService
 
 <MudPaper Class="p-4">
-    <AutoTable @ref="tableRef" TItem="ContributionModel" OnAction="Actions" LoadData="LoadData" ShowAllActions="true"/>
+    <AutoTable @ref="tableRef" TItem="ContributionModel" OnAction="Actions" LoadData="LoadData" ShowAllActions="true" IsAdmin="authService.IsLoggedIn" />
 </MudPaper>
 
 @code {
