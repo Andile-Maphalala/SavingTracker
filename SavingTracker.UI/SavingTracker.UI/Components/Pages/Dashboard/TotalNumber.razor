@@ -1,16 +1,15 @@
-﻿
-<MudPaper Elevation="2" Class="pa-4 d-flex flex-column justify-between"
+﻿<MudPaper Elevation="2" Class="pa-4 d-flex flex-column"
           Style=@($"height: 100px; background:{ComponentColor}; color:white;")>
 
-    <div class="d-flex justify-between align-center">
+    <div class="d-flex justify-content-between align-items-center">
         <MudText Class="font-weight-bold">@Description @DateTime.Now.ToShortDateString()</MudText>
-        <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" />
+        <MudIcon Icon="@Icon" Size="Size.Large" />
     </div>
 
-    <div class="d-flex justify-end align-center" style="font-size: 3em;">
+    <div class="d-flex justify-content-end align-items-center" style="font-size: 3em;">
         @if (IsLoaded)
         {
-            <span>@TotalMembers</span>
+            <span>@Total</span>
         }
         else
         {
@@ -19,15 +18,19 @@
     </div>
 </MudPaper>
 
-@code {
-    [Parameter] 
-    public int TotalMembers { get; set; }
 
-    [Parameter] 
+@code {
+    [Parameter]
+    public int Total { get; set; }
+
+    [Parameter]
     public string Description { get; set; } = "Total Members";
 
-    [Parameter] 
+    [Parameter]
     public string ComponentColor { get; set; } = Colors.Blue.Default;
+
+    [Parameter]
+    public string Icon { get; set; } = Icons.Material.Filled.Groups;
 
     private bool IsLoaded = false;
 

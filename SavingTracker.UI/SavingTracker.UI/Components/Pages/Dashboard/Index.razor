@@ -27,7 +27,7 @@
         @if (SelectedPlanId != 0)
         {
             <MudItem xs="12" sm="6" md="3">
-                <TotalMembersCard TotalMembers="Data.TotalMembers" Description="Total Members" ComponentColor="@Colors.Blue.Default" />
+                <TotalNumber Total="Data.TotalMembers" Description="Total Members" ComponentColor="@Colors.Blue.Default" />
             </MudItem>
 
             <MudItem xs="12" sm="6" md="3">
@@ -40,6 +40,9 @@
 
             <MudItem xs="12" sm="6" md="3">
                 <Total TotalValue="Data.PeriodIncome" Description="@PeriodDescription" ComponentColor="@Colors.Amber.Default" />
+            </MudItem>
+             <MudItem xs="12" sm="12" md="12">
+                <TotalNumber Total="Data.TotalPeriods" Description="Total Periods" ComponentColor="@Colors.Cyan.Default"  Icon="@Icons.Material.Filled.CalendarMonth"/>
             </MudItem>
             <MudItem xs="12" sm="12" md="12">
                 <AutoTable @ref="tableRef" TItem="MemberDashboardSummaryModel" OnAction="Actions" LoadData="LoadData" ShowAllActionsExceptBulk="false" ActionVisibilities="ActionVisibilities"/>

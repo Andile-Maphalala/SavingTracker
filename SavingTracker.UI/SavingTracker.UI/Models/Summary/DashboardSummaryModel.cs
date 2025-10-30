@@ -6,6 +6,8 @@
         public decimal TotalContribution { get; set; }
         public decimal TotalOutstandingAmount { get; set; }
         public decimal PeriodIncome { get; set; }
+        public int TotalPeriods { get; set; }
+
         public List<MemberDashboardSummaryModel> MemberSummaries { get; set; }
 
     }
