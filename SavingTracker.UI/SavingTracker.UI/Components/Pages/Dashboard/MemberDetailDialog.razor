@@ -1,0 +1,31 @@
+﻿@using SavingTracker.UI.Models.Summary
+<MudDialog>
+    <DialogContent>
+
+        <MudPaper Class="p-4">
+            <AutoTable TItem="ContributionSummaryModel" LoadData="LoadData" ShowAllActionsExceptBulk="false" />
+        </MudPaper>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Color="Color.Primary">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<ContributionSummaryModel> Data { get; set; } = new List<ContributionSummaryModel>();
+
+
+    void Close() => MudDialog.Close();
+
+    private async Task<List<ContributionSummaryModel>> LoadData()
+    {
+        return Data;
+    }
+
+
+
+}

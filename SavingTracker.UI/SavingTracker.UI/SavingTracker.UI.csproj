@@ -28,10 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Pages\Dashboard\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <OpenApiReference Include="SwaggerGen\swagger.json" Namespace="SavingTracker.ApiClient" Options="/operationGenerationMode:SingleClientFromPathSegments /useBaseUrl:false /dateType:DateTime /dateTimeType:DateTime /excludedTypeNames:ValidationResult,DataTypeEnum,TimeSpan" ClassName="SavingTrackerApiClient" />
   </ItemGroup>
 

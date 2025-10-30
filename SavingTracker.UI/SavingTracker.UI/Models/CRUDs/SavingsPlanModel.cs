@@ -16,10 +16,10 @@ namespace SavingTracker.UI.Models.CRUDs
         [CustomColumn(DisplayName = "TargetAmount", Order = 3)]
         public decimal TargetAmount { get; set; }
 
-        [CustomColumn(DisplayName = "StartDate", Order = 4, FormatString = "{0:yyyy/MM/dd}")]
+        [CustomColumn(DisplayName = "StartDate", Order = 4, FormatString = "yyyy/MM/dd")]
         public DateTime? StartDate { get; set; }
 
-        [CustomColumn(DisplayName = "EndDate", Order = 5,FormatString = "{0:yyyy/MM/dd}")]
+        [CustomColumn(DisplayName = "EndDate", Order = 5,FormatString = "yyyy/MM/dd")]
         public DateTime? EndDate { get; set; }
     }
 }

@@ -10,6 +10,8 @@ namespace SavingTracker.UI.Services
             services.AddScoped<IMemberService, MemberService>();
             services.AddScoped<IContributionTypeService, ContributionTypeService>();
             services.AddScoped<ISavingsPlanService, SavingsPlanService>();
+            services.AddScoped<IDashboardService, DashboardService>();
+
             return services;
         }
     }

@@ -1,0 +1,32 @@
+﻿
+<MudPaper Elevation="2" Class="pa-4" Style=@($"height: 100px;background:{ComponentColor};color: white;")>
+    <MudText><b>@Description @DateTime.Now.ToShortDateString()</b></MudText>
+    <MudText Align="Align.Right" Style="font-size: 3em;">
+       R @if(IsLoaded)
+        {
+            @TotalValue.ToString("N0")
+        }
+        else
+        {
+            <MudProgressLinear Color="Color.Dark" Indeterminate="true" Class="my-7" />
+        }
+    </MudText>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public decimal TotalValue { get; set; }
+
+    [Parameter]
+    public string Description { get; set; }
+
+    [Parameter]
+    public string ComponentColor { get; set; }
+
+    private bool IsLoaded = false;
+
+    protected override void OnParametersSet()
+    {
+        IsLoaded = true;
+    }
+}
