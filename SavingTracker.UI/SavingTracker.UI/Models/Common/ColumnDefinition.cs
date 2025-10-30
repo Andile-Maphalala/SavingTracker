@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace SavingTracker.UI.Models.Common
 {
@@ -10,19 +9,19 @@ namespace SavingTracker.UI.Models.Common
         public int Order { get; }
         public bool Visible { get; }
         public string? FormatString { get; }
+        public bool Searchable { get; }
 
         public ColumnDefinition(PropertyInfo property)
         {
             PropertyInfo = property;
 
-            var displayAttr = property.GetCustomAttribute<DisplayAttribute>();
-            var scaffoldAttr = property.GetCustomAttribute<ScaffoldColumnAttribute>();
-            var displayFormat = property.GetCustomAttribute<DisplayFormatAttribute>();
+            var attr = property.GetCustomAttribute<CustomColumnAttribute>();
 
-            DisplayName = displayAttr?.Name ?? property.Name;
-            Order = displayAttr?.GetOrder() ?? 0;
-            Visible = scaffoldAttr?.Scaffold ?? true;
-            FormatString = displayFormat?.DataFormatString;
+            DisplayName = attr?.DisplayName ?? property.Name;
+            Order = attr?.Order ?? 0;
+            Visible = attr?.Visible ?? true;
+            FormatString = attr?.FormatString;
+            Searchable = attr?.Searchable ?? true;
         }
     }
 }

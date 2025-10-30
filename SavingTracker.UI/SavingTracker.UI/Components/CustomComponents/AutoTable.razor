@@ -48,7 +48,7 @@ else
                 <MudTd>
                     @if (!string.IsNullOrEmpty(column.FormatString))
                     {
-                        @string.Format(column.FormatString, column.PropertyInfo.GetValue(context))
+                        @string.Format("{0:" + column.FormatString + "}", column.PropertyInfo.GetValue(context))
                     }
                     else
                     {
