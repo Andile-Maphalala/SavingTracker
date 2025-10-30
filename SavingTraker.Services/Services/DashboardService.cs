@@ -5,6 +5,7 @@ using SavingTracker.Data.Models;
 using SavingTraker.App.Dtos.Summary;
 using SavingTraker.App.Exceptions;
 using SavingTraker.App.Interfaces;
+using System.Threading;
 
 namespace SavingTraker.App.Services
 {
@@ -55,10 +56,37 @@ namespace SavingTraker.App.Services
             summary.TotalContribution = summary.MemberSummaries.Sum(m => m.TotalContributedAmount);
             summary.TotalOutstandingAmount = summary.MemberSummaries.Sum(m => m.OustandingAmount);
             summary.PeriodIncome = summary.MemberSummaries.Sum(m => m.PeriodFee);
+            summary.TotalPeriods = GetTotalPeriods(savingsPlan.StartDate, frequency);
 
             return summary;
         }
 
+
+        public async Task<SavingsPlanProjectionDto> GetSavingProjection(int savingPlanId, decimal TargetAmount, int FrequncyType, int projectedMonths, decimal interestRate, CancellationToken cancellationToken)
+        {
+            SavingsPlanProjectionDto result = new SavingsPlanProjectionDto();
+            var projection = new List<SavingsProjectionPointDto>();
+            var savingsPlan = await _db.SavingsPlans.FindAsync(savingPlanId, cancellationToken);
+            if (savingsPlan == null)
+            {
+                throw new NotFoundException("Savings Plan", savingPlanId);
+            }
+
+            var frequency = (ContributionFrequency)FrequncyType;
+            var totalPeriods = GetTotalPeriods(savingsPlan.StartDate, frequency);
+            var members = _db.Members.Include(x => x.Contributions).Where(m => m.SavingsPlan.Id == savingPlanId);
+            decimal total = members.Sum(x => x.Contributions.Sum(c => c.Amount));
+            var contributionAmount = members.Sum(x => ConvertAmount(x.ContributionType.Amount, (ContributionFrequency)x.ContributionType.Frequency,frequency));
+            List<decimal> convertedInterests = new List<decimal>();
+            foreach (var member in members)
+            {
+                var convertedInterest = ConvertAmount(interestRate, (ContributionFrequency)member.ContributionType.Frequency, frequency);
+                convertedInterests.Add(convertedInterest);
+            }
+
+
+            return result;
+        }
 
         public decimal ConvertAmount(decimal Amount, ContributionFrequency contributionFrequency, ContributionFrequency targetFrequency)
         {
@@ -133,6 +161,35 @@ namespace SavingTraker.App.Services
                     int years = DateTime.Now.Year - startDate.Year;
                     decimal expectedYearlyTotal = years * periodFee;
                     return Math.Max(0, expectedYearlyTotal - totalContributed);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(frequency), frequency, "Unsupported contribution frequency");
+            }
+        }
+
+        private int GetTotalPeriods(DateTime startDate, ContributionFrequency frequency)
+        {
+            var currentDate = DateTime.Now;
+            if(currentDate > startDate)
+            {
+                return 0;
+            }
+
+            switch (frequency)
+            {
+                case ContributionFrequency.Daily:
+                    return (DateTime.Now - startDate).Days;
+                case ContributionFrequency.Weekly:
+                    return (DateTime.Now - startDate).Days / 7;
+                case ContributionFrequency.BiWeekly:
+                    return (DateTime.Now - startDate).Days / 14;
+                case ContributionFrequency.Monthly:
+                    return ((DateTime.Now.Year - startDate.Year) * 12) + DateTime.Now.Month - startDate.Month;
+                case ContributionFrequency.Quarterly:
+                    return (((DateTime.Now.Year - startDate.Year) * 12) + DateTime.Now.Month - startDate.Month) / 3;
+                case ContributionFrequency.SemiAnnual:
+                    return(((DateTime.Now.Year - startDate.Year) * 12) + DateTime.Now.Month - startDate.Month) / 6;
+                case ContributionFrequency.Yearly:
+                    return DateTime.Now.Year - startDate.Year;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(frequency), frequency, "Unsupported contribution frequency");
             }
