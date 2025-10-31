@@ -1,4 +1,3 @@
-version: '3.9'
 name: savingtracker 
 services:
   postgres:
@@ -26,6 +25,20 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
+
+  blazor:
+    build:
+      context: .
+      dockerfile: SavingTracker.UI/SavingTracker.UI/Dockerfile
+    container_name: savingtracker-blazor
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ApiBaseUrl: "http://api:8080"
+      ASPNETCORE_URLS: "http://+:5000"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - api
 
 volumes:
   pgdata:
