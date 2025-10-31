@@ -21,7 +21,20 @@ else
         <HeaderContent>
             @foreach (var column in VisibleColumns)
             {
-                <MudTh>@column.DisplayName</MudTh>
+                <MudTh>
+                    @if (column.Sortable)
+                    {
+                        <MudTableSortLabel SortBy="item => column.PropertyInfo.GetValue(item)"
+                                           T="TItem"
+                                           @bind-SortDirection="column.SortDirection">
+                            @column.DisplayName
+                        </MudTableSortLabel>
+                    }
+                    else
+                    {
+                        @column.DisplayName
+                    }
+                </MudTh>
             }
         </HeaderContent>
         <ToolBarContent>

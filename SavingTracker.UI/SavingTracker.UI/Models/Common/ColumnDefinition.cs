@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using MudBlazor;
+using System.Reflection;
 
 namespace SavingTracker.UI.Models.Common
 {
@@ -10,6 +11,8 @@ namespace SavingTracker.UI.Models.Common
         public bool Visible { get; }
         public string? FormatString { get; }
         public bool Searchable { get; }
+        public bool Sortable { get; set; } = true;
+        public SortDirection SortDirection { get; set; } = SortDirection.None;
 
         public ColumnDefinition(PropertyInfo property)
         {
@@ -22,6 +25,7 @@ namespace SavingTracker.UI.Models.Common
             Visible = attr?.Visible ?? true;
             FormatString = attr?.FormatString;
             Searchable = attr?.Searchable ?? true;
+            Sortable = attr?.Sortable ?? true;
         }
     }
 }
