@@ -4,7 +4,7 @@ namespace SavingTracker.UI.Models.CRUDs
 {
     public class SavingsPlanModel
     {
-        [CustomColumn(DisplayName = "Id",Order = 0)]
+        [CustomColumn(DisplayName = "Id",Order = 0, Visible = false)]
         public int Id { get; set; }
 
         [CustomColumn(DisplayName = "DisplayName", Order = 1)]
@@ -13,7 +13,7 @@ namespace SavingTracker.UI.Models.CRUDs
         [CustomColumn(DisplayName = "Description", Order = 2)]
         public string? Description { get; set; }
 
-        [CustomColumn(DisplayName = "TargetAmount", Order = 3)]
+        [CustomColumn(DisplayName = "TargetAmount", Order = 3, FormatString = "N2")]
         public decimal TargetAmount { get; set; }
 
         [CustomColumn(DisplayName = "StartDate", Order = 4, FormatString = "yyyy/MM/dd")]
