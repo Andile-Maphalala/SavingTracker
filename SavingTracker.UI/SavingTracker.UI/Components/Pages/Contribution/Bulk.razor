@@ -1,0 +1,103 @@
+﻿@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Models.Enums
+@using SavingTracker.UI.Models.Lookups
+@using SavingTracker.UI.Services.Interfaces
+@using SavingTraker.App.Interfaces
+
+@inject IContributionService service
+@inject IMemberService memberService
+
+<AutoForm TModel="ContributionModel" Model="Model" FormMode="FormMode" OnSubmit="Submit" OnCancel="Cancel">
+    <MudGrid Spacing="2">
+        <MudItem xs="12">
+            <AutoSelect @bind-Value="Model.MemberId" Items="MemberTypeList" Label="Member" For="@(() => Model.MemberId)" Variant="Variant.Outlined" />
+        </MudItem>
+
+        @foreach (var item in Models)
+        {
+            <MudItem xs="12" sm="5">
+                <MudTextField @bind-Value="item.Amount" Label="Amount" For="@(() => item.Amount)" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="R" />
+            </MudItem>
+
+            <MudItem xs="12" sm="5">
+                <MudDatePicker @bind-Date="item.Date" Label="Transaction Date" ShowToolbar="false" />
+            </MudItem>
+
+            <MudItem xs="12" sm="2" Class="d-flex align-end justify-end">
+                <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary" OnClick="@(() => Duplicate(item))"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveRow(item))"/>
+
+            </MudItem>
+        }
+
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="AddRow">
+                Add Another
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</AutoForm>
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public FormModeEnum FormMode { get; set; }
+
+    private List<ContributionModel> Models = new List<ContributionModel>();
+
+    private ContributionModel Model = new ContributionModel();
+
+    private List<LookUpModel> MemberTypeList = new List<LookUpModel>();
+
+
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var members = await memberService.GetAll(appCancellation.Token);
+            MemberTypeList = members.Select(x => new LookUpModel { Id = x.Id, Name = x.FullName }).ToList();
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task Submit()
+    {
+        foreach (var model in Models)
+        {
+            model.MemberId = Model.MemberId;
+        }
+        var result = await service.BulkUpsert(Models, appCancellation.Token);
+
+        MudDialog.Close(DialogResult.Ok(result));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+    private void AddRow()
+    {
+        Models.Add(new ContributionModel());
+    }
+
+    private void Duplicate(ContributionModel item)
+    {
+        Models.Add(new ContributionModel
+        {
+            Amount = item.Amount,
+            Date = item.Date
+        });
+    }
+
+    private void RemoveRow(ContributionModel item)
+    {
+        int index = Models.IndexOf(item);
+        if (index >= 0 && index < Models.Count)
+            Models.RemoveAt(index);
+    }
+}
+

@@ -4,40 +4,40 @@ using SavingTraker.App.Interfaces;
 
 namespace SavingTracker.Api.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class MemberController(IMemberService service) : ControllerBase
     {
-        [HttpGet]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        [HttpGet(nameof(GetAll))]
+        public async Task<ActionResult<List<MemberDto>>> GetAll(CancellationToken cancellationToken)
         {
             var result = await service.GetAll(cancellationToken);
             return Ok(result);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
+        [HttpGet(nameof(GetById))]
+        public async Task<ActionResult<MemberDto>> GetById(int id, CancellationToken cancellationToken)
         {
             var result = await service.GetById(id, cancellationToken);
             return Ok(result);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> UpSert([FromBody] MemberDto dto, CancellationToken cancellationToken)
+        [HttpPost(nameof(UpSert))]
+        public async Task<ActionResult<int>> UpSert([FromBody] MemberDto dto, CancellationToken cancellationToken)
         {
             var result = await service.UpSert(dto, cancellationToken);
             return Ok(result);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> BulkUpsert([FromBody] List<MemberDto> dtos, CancellationToken cancellationToken)
+        [HttpPost(nameof(BulkUpsert))]
+        public async Task<ActionResult<List<int>>> BulkUpsert([FromBody] List<MemberDto> dtos, CancellationToken cancellationToken)
         {
             var result = await service.BulkUpsert(dtos, cancellationToken);
             return Ok(result);
         }
 
-        [HttpDelete]
-        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        [HttpDelete(nameof(Delete))]
+        public async Task<ActionResult<int>> Delete(int id, CancellationToken cancellationToken)
         {
             var result = await service.Delete(id, cancellationToken);
             return Ok(result);

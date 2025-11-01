@@ -1,0 +1,85 @@
+﻿@typeparam TModel
+@using MudBlazor
+@using SavingTracker.UI.Models.Enums
+
+
+<MudCard>
+    <MudForm @ref="Form" Model="Model" Disabled="DisableInputs" @onsubmit="Submit">
+    @if (FormMode == FormModeEnum.Delete)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">Are you sure you want to delete the following Data</MudAlert>
+        }
+        <MudCardContent>
+            @ChildContent
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions Class="d-flex justify-end gap-2">
+        <MudButton OnClick="Cancel" Variant="Variant.Filled" Color="Color.Primary">Cancel</MudButton>
+        @if (FormMode != FormModeEnum.View)
+        {
+            <MudButton OnClick="Submit" Variant="Variant.Filled" Color="@ButtonColor">@ButtonDescription</MudButton>
+        }
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter] 
+    public TModel Model { get; set; } = default!;
+
+    [Parameter] 
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] 
+    public bool DisableInputs { get; set; } = false;
+
+    [Parameter] 
+    public EventCallback<TModel> OnSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public FormModeEnum FormMode { get; set; } 
+
+    private MudForm? Form { get; set; }
+
+    private string ButtonDescription { get; set; } = "Submit";
+    private Color ButtonColor { get; set; } = Color.Primary;
+    protected override void OnInitialized()
+    {
+        if (FormMode == FormModeEnum.View)
+        {
+            DisableInputs = true;
+        }
+
+        switch (FormMode)
+        {
+            case FormModeEnum.Delete:
+                ButtonDescription = "Delete";
+                ButtonColor = Color.Error;
+                DisableInputs = true;
+                break;
+            case FormModeEnum.View:
+                DisableInputs = true;
+                break;
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (Form is not null)
+        {
+            await Form.Validate();
+            if (Form.IsValid)
+            {
+                await OnSubmit.InvokeAsync(Model);
+            }
+        }
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+
+}

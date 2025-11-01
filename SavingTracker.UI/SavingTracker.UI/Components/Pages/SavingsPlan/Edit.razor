@@ -1,0 +1,61 @@
+﻿@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Models.Enums
+@using SavingTracker.UI.Services.Interfaces
+@using SavingTraker.App.Interfaces
+
+@inject ISavingsPlanService service
+
+<AutoForm TModel="SavingsPlanModel" Model="Model" FormMode="FormMode" OnSubmit="Submit" OnCancel="Cancel">
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudTextField @bind-Value="Model.Name" Label="Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudTextField @bind-Value="Model.TargetAmount" Label="Target Amount"For="@(() => Model.TargetAmount)" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="R" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudDatePicker @bind-Date="Model.StartDate" Label="Start Date" ShowToolbar="false" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudDatePicker @bind-Date="Model.EndDate" Label="End Date" ShowToolbar="false" />
+        </MudItem>
+
+        <MudItem xs="12" sm="12">
+            <MudTextField @bind-Value="Model.Description" Label="Description" For="@(() => Model.Description)" Variant="Variant.Outlined" AutoGrow MaxLines="4" />
+        </MudItem>
+
+    </MudGrid>
+</AutoForm>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public SavingsPlanModel Model { get; set; } = new SavingsPlanModel();
+
+    [Parameter]
+    public FormModeEnum FormMode { get; set; }
+
+
+    private async Task Submit()
+    {
+        int result = 0;
+        switch (FormMode)
+        {
+            case FormModeEnum.Delete:
+                result = await service.Delete(Model.Id, appCancellation.Token);
+                break;
+            default:
+                result = await service.UpSert(Model, appCancellation.Token);
+                break;
+        }
+        MudDialog.Close(DialogResult.Ok(result));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
+

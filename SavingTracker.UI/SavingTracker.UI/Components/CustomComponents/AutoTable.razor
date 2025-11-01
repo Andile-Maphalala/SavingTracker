@@ -1,0 +1,296 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using System.Reflection
+@using MudBlazor
+@using SavingTracker.UI.Models.Common
+@using SavingTracker.UI.Models.Enums
+@using SavingTracker.UI.Services
+@typeparam TItem
+
+@if (IsLoading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+else
+{
+    <MudTable Items="Data"
+              Dense="Dense"
+              Hover="Hover"
+              Bordered="Bordered"
+              Striped="Striped"
+              Filter="DynamicFilter">
+        <HeaderContent>
+            @foreach (var column in VisibleColumns)
+            {
+                <MudTh>
+                    @if (column.Sortable)
+                    {
+                        <MudTableSortLabel SortBy="item => column.PropertyInfo.GetValue(item)"
+                                           T="TItem"
+                                           @bind-SortDirection="column.SortDirection">
+                            @column.DisplayName
+                        </MudTableSortLabel>
+                    }
+                    else
+                    {
+                        @column.DisplayName
+                    }
+                </MudTh>
+            }
+        </HeaderContent>
+        <ToolBarContent>
+            <MudGrid>
+                <MudItem xs="12" sm="9">
+                    @if (ShouldShowAction(FormModeEnum.Create) && IsAdmin)
+                    {
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add">Add</MudButton>
+                    }
+                    @if (ShouldShowAction(FormModeEnum.BulkCreate) && IsAdmin)
+                    {
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="BulkAdd">Bulk Add</MudButton>
+                    }
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </MudItem>
+            </MudGrid>
+
+        </ToolBarContent>
+        <RowTemplate>
+            @foreach (var column in VisibleColumns)
+            {
+                <MudTd>
+                    @if (!string.IsNullOrEmpty(column.FormatString))
+                    {
+                        @string.Format("{0:" + column.FormatString + "}", column.PropertyInfo.GetValue(context))
+                    }
+                    else
+                    {
+                        @column.PropertyInfo.GetValue(context)
+                    }
+                </MudTd>
+            }
+            @if (CrudColumn != null)
+            {
+                <MudTd Style="width:1%;">
+                    <MudStack Row="true" Spacing="1">
+                        @foreach (var c in CrudColumn)
+                        {
+                            @c(context)
+                        }
+                    </MudStack>
+                </MudTd>
+
+            }
+        </RowTemplate>
+    </MudTable>
+}
+
+
+@code {
+
+    [Parameter]
+    public Func<Task<List<TItem>>>? LoadData { get; set; }
+
+    [Parameter] 
+    public IEnumerable<TItem>? Data { get; set; }
+
+    [Parameter] 
+    public bool Dense { get; set; } = true;
+
+    [Parameter] 
+    public bool Hover { get; set; } = true;
+
+    [Parameter] 
+    public bool Bordered { get; set; } = true;
+
+    [Parameter] 
+    public bool Striped { get; set; } = true;
+
+    [Parameter]
+    public List<AutotableActionVisibilityModel> ActionVisibilities { get; set; } = new List<AutotableActionVisibilityModel>();
+
+    [Parameter]
+    public bool ShowAllActionsExceptBulk { get; set; } = true;
+
+    [Parameter]
+    public bool ShowAllActions { get; set; } = false;
+
+    [Parameter] 
+    public EventCallback<ActionModel<TItem>> OnAction { get; set; }
+
+    [Parameter]
+    public bool IsAdmin { get; set; } = false;
+
+
+    private bool IsLoading { get; set; } = true;
+
+    private string searchString { get; set; } = string.Empty;
+
+    private List<PropertyInfo> SearchableProps = new();
+    private List<ColumnDefinition> VisibleColumns = new();
+    private List<RenderFragment<TItem>> CrudColumn { get; set; } = default!;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await RefreshTable();
+        VisibleColumns = typeof(TItem)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Select(p => new ColumnDefinition(p))
+            .Where(c => c.Visible)
+            .OrderBy(c => c.Order)
+            .ToList();
+
+        SearchableProps = VisibleColumns
+            .Where(c =>
+                c.PropertyInfo.PropertyType.IsPrimitive ||
+                c.PropertyInfo.PropertyType == typeof(string) ||
+                c.PropertyInfo.PropertyType == typeof(decimal) ||
+                c.PropertyInfo.PropertyType == typeof(DateTime))
+            .Select(c => c.PropertyInfo)
+            .ToList();
+
+        
+        if (ShowAllActionsExceptBulk)
+        {
+            ActionVisibilities.Clear();
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Create, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.View, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Update, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Delete, IsVisible = true });
+
+        }
+        if (ShowAllActions)
+        {
+            ActionVisibilities.Clear();
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Create, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.View, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Update, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.Delete, IsVisible = true });
+            ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.BulkCreate, IsVisible = true });
+        }
+
+        AddCrudColumnButtons();
+        IsLoading = false;
+
+    }
+
+    public async Task RefreshTable()
+    {
+        if (LoadData != null)
+        {
+            try
+            {
+                IsLoading = true;
+                Data = await LoadData.Invoke();
+            }
+            catch (Exception ex)
+            {
+
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private bool DynamicFilter(TItem item)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+
+        var search = searchString.Trim();
+
+        foreach (var prop in SearchableProps)
+        {
+            var value = prop.GetValue(item)?.ToString();
+            if (!string.IsNullOrEmpty(value) &&
+                value.Contains(search, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private async Task Add()
+    {
+        await OnAction.InvokeAsync(new ActionModel<TItem> { Mode = FormModeEnum.Create });
+    }
+
+    private async Task BulkAdd()
+    {
+        await OnAction.InvokeAsync(new ActionModel<TItem> { Mode = FormModeEnum.BulkCreate });
+    }
+
+    private void AddCrudColumnButtons()
+    {
+        var crudColumns = new List<RenderFragment<TItem>>();
+        if (ShouldShowAction(FormModeEnum.View))
+        {
+            crudColumns.Add(item => builder =>
+            {
+                builder.OpenComponent<MudButton>(0);
+                builder.AddAttribute(1, "Color", Color.Info);
+                builder.AddAttribute(2, "Variant", Variant.Filled);
+                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnAction.InvokeAsync(new ActionModel<TItem> { Item = item, Mode = FormModeEnum.View })));
+                builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Visibility);
+                builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
+                {
+                    b.AddContent(6, "View");
+                }));
+                builder.CloseComponent();
+            });
+        }
+        if (ShouldShowAction(FormModeEnum.Update) && IsAdmin)
+        {
+            crudColumns.Add(item => builder =>
+            {
+                builder.OpenComponent<MudButton>(0);
+                builder.AddAttribute(1, "Color", Color.Primary);
+                builder.AddAttribute(2, "Variant", Variant.Filled);
+                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, (MouseEventArgs e) => OnAction.InvokeAsync(new ActionModel<TItem> { Item = item, Mode = FormModeEnum.Update })));
+                builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Edit);
+                builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
+                {
+                    b.AddContent(6, "Edit");
+                }));
+                builder.CloseComponent();
+            });
+        }
+        if (ShouldShowAction(FormModeEnum.Delete) && IsAdmin)
+        {
+            crudColumns.Add(item => builder =>
+            {
+                builder.OpenComponent<MudButton>(0);
+                builder.AddAttribute(1, "Color", Color.Error);
+                builder.AddAttribute(2, "Variant", Variant.Filled);
+                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnAction.InvokeAsync(new ActionModel<TItem> { Item = item, Mode = FormModeEnum.Delete })));
+                builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Delete);
+                builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
+                {
+                    b.AddContent(6, "Delete");
+                }));
+                builder.CloseComponent();
+            });
+        }
+        CrudColumn = crudColumns;
+
+    }
+
+    private bool ShouldShowAction(FormModeEnum mode)
+    {
+        var visibility = ActionVisibilities.FirstOrDefault(a => a.Mode == mode);
+        if (visibility != null)
+        {
+            return visibility.IsVisible;
+        }
+        return false;
+    }
+
+}

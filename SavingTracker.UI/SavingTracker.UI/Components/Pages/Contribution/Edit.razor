@@ -1,0 +1,64 @@
+﻿@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Models.Enums
+@using SavingTracker.UI.Models.Lookups
+@using SavingTracker.UI.Services.Interfaces
+@using SavingTraker.App.Interfaces
+
+@inject IContributionService service
+@inject IMemberService memberService
+
+<AutoForm TModel="ContributionModel" Model="Model" FormMode="FormMode" OnSubmit="Submit" OnCancel="Cancel">
+    <MudGrid>
+        <MudItem xs="12" sm="12">
+            <AutoSelect @bind-Value="Model.MemberId" Items="MemberTypeList" Label="Member" For="@(() => Model.MemberId)" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudTextField @bind-Value="Model.Amount" Label="Amount" For="@(() => Model.Amount)" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="R" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudDatePicker @bind-Date="Model.Date" Label="Transaction Date" ShowToolbar="false" />
+        </MudItem>
+    </MudGrid>
+</AutoForm>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public ContributionModel Model { get; set; } = new ContributionModel();
+
+    [Parameter]
+    public FormModeEnum FormMode { get; set; }
+
+    private List<LookUpModel> MemberTypeList = new List<LookUpModel>();
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var members = await memberService.GetAll(appCancellation.Token);
+            MemberTypeList = members.Select(x => new LookUpModel { Id = x.Id, Name = x.FullName }).ToList();
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task Submit()
+    {
+        int result = 0;
+        switch (FormMode)
+        {
+            case FormModeEnum.Delete:
+                result = await service.Delete(Model.Id, appCancellation.Token);
+                break;
+            default:
+                result = await service.UpSert(Model, appCancellation.Token);
+                break;
+        }
+        MudDialog.Close(DialogResult.Ok(result));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
+

@@ -1,0 +1,29 @@
+﻿
+using SavingTracker.UI.Models.Common;
+
+namespace SavingTracker.UI.Models.Summary
+{
+    public class MemberDashboardSummaryModel
+    {
+        [CustomColumn(DisplayName = "EndDate", Order = 0,Visible = false)]
+        public int MemberId { get; set; }
+
+        [CustomColumn(DisplayName = "Full Name", Order = 1)]
+        public string MemberName { get; set; }
+
+        [CustomColumn(DisplayName = "Total ContributedAmount", Order = 2, FormatString = "N2")]
+        public decimal TotalContributedAmount { get; set; }
+
+        [CustomColumn(DisplayName = "Oustanding Amount", Order = 3, FormatString = "N2")]
+        public decimal OustandingAmount { get; set; }
+
+        [CustomColumn(DisplayName = "Periods Paid", Order = 4)]
+        public int PeriodsPaid { get; set; }
+
+        [CustomColumn(DisplayName = "Period Fee", Order = 5, FormatString = "N2")]
+        public decimal PeriodFee { get; set; }
+
+        [CustomColumn(Visible = false)]
+        public List<ContributionSummaryModel> AllContributions { get; set; }
+    }
+}

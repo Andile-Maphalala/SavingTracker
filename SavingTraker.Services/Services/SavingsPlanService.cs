@@ -61,9 +61,14 @@ namespace SavingTraker.App.Services
                     Name = dto.Name,
                     Description = dto.Description,
                     TargetAmount = dto.TargetAmount,
-                    StartDate = dto.StartDate,
+                    StartDate  = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc),
                     EndDate = dto.EndDate
                 };
+                if (entity.EndDate.HasValue)
+                {
+                    entity.EndDate = DateTime.SpecifyKind(entity.EndDate.Value, DateTimeKind.Utc);
+                }
+
                 _db.SavingsPlans.Add(entity);
             }
             else
@@ -71,8 +76,11 @@ namespace SavingTraker.App.Services
                 entity.Name = dto.Name;
                 entity.Description = dto.Description;
                 entity.TargetAmount = dto.TargetAmount;
-                entity.StartDate = dto.StartDate;
-                entity.EndDate = dto.EndDate;
+                entity.StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc);
+                if (entity.EndDate.HasValue)
+                {
+                    entity.EndDate = DateTime.SpecifyKind(entity.EndDate.Value, DateTimeKind.Utc);
+                }
             }
             await _db.SaveChangesAsync(cancellationToken);
 

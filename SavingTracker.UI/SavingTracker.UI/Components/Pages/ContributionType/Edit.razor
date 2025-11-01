@@ -1,0 +1,62 @@
+﻿@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Models.Enums
+@using SavingTracker.UI.Models.Lookups
+@using SavingTracker.UI.Services.Interfaces
+@using SavingTraker.App.Interfaces
+
+@inject IContributionTypeService service
+
+<AutoForm TModel="ContributionTypeModel" Model="Model" FormMode="FormMode" OnSubmit="Submit" OnCancel="Cancel">
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudTextField @bind-Value="Model.Name" Label="Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudTextField @bind-Value="Model.Amount" Label="Amount" For="@(() => Model.Amount)" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="R" />
+        </MudItem>
+        <MudItem xs="12" sm="12">
+            <AutoSelect @bind-Value="Model.Frequency" Items="Frequencies" Label="Frequency" For="@(() => Model.Frequency)" Variant="Variant.Outlined"/>
+        </MudItem>
+    </MudGrid>
+</AutoForm>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public ContributionTypeModel Model { get; set; } = new ContributionTypeModel();
+
+    [Parameter]
+    public FormModeEnum FormMode { get; set; }
+
+    private List<LookUpModel> Frequencies = new List<LookUpModel>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Frequencies = service.GetContributionFrequenyList();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task Submit()
+    {
+        int result = 0;
+        switch (FormMode)
+        {
+            case FormModeEnum.Delete:
+                result = await service.Delete(Model.Id, appCancellation.Token);
+                break;
+            default:
+                result = await service.UpSert(Model, appCancellation.Token);
+                break;
+        }
+        MudDialog.Close(DialogResult.Ok(result));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+}
+

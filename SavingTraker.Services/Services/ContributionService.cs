@@ -70,14 +70,14 @@ namespace SavingTraker.App.Services
                 entity = new Contribution
                 {
                     MemberId = dto.MemberId,
-                    Date = dto.Date,
+                    Date = DateTime.SpecifyKind(dto.Date, DateTimeKind.Utc),
                     Amount = dto.Amount
                 };
                 _db.Contributions.Add(entity);
             }
             else
             {
-                entity.Date = dto.Date;
+                entity.Date = DateTime.SpecifyKind(dto.Date, DateTimeKind.Utc);
                 entity.Amount = dto.Amount;
                 _db.Contributions.Update(entity);
             }

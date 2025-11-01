@@ -1,0 +1,41 @@
+﻿<MudPaper Elevation="2" Class="pa-4 d-flex flex-column"
+          Style=@($"height: 100px; background:{ComponentColor}; color:white;")>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <MudText Class="font-weight-bold">@Description @DateTime.Now.ToShortDateString()</MudText>
+        <MudIcon Icon="@Icon" Size="Size.Large" />
+    </div>
+
+    <div class="d-flex justify-content-end align-items-center" style="font-size: 3em;">
+        @if (IsLoaded)
+        {
+            <span>@Total</span>
+        }
+        else
+        {
+            <MudProgressLinear Color="Color.Dark" Indeterminate="true" Class="w-1/2" />
+        }
+    </div>
+</MudPaper>
+
+
+@code {
+    [Parameter]
+    public int Total { get; set; }
+
+    [Parameter]
+    public string Description { get; set; } = "Total Members";
+
+    [Parameter]
+    public string ComponentColor { get; set; } = Colors.Blue.Default;
+
+    [Parameter]
+    public string Icon { get; set; } = Icons.Material.Filled.Groups;
+
+    private bool IsLoaded = false;
+
+    protected override void OnParametersSet()
+    {
+        IsLoaded = true;
+    }
+}

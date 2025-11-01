@@ -1,0 +1,63 @@
+﻿@page "/members";
+
+@using SavingTracker.UI.Components.CustomComponents
+@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Models.Common
+@using SavingTracker.UI.Services.Interfaces
+@using SavingTraker.App.Interfaces
+
+@inject IDialogService dialogService
+@inject IMemberService service
+
+<MudPaper Class="p-4">
+    <AutoTable @ref="tableRef" TItem="MemberModel" OnAction="Actions" LoadData="LoadData" IsAdmin="authService.IsLoggedIn" />
+</MudPaper>
+
+@code {
+    AutoTable<MemberModel> tableRef;
+    private List<MemberModel> Data = new List<MemberModel>();
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+        }
+    }
+    private async Task Actions(ActionModel<MemberModel> item)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        if (item.Mode == Models.Enums.FormModeEnum.Create)
+        {
+            item.Item = new MemberModel();
+        }
+
+        var parameters = new DialogParameters<Edit>
+        {
+            { x => x.Model, item.Item },
+            { x => x.FormMode, item.Mode }
+        };
+
+        var dialog = await dialogService.ShowAsync<Edit>(item.Mode.ToString(), parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await tableRef?.RefreshTable();
+        }
+    }
+
+    private async Task<List<MemberModel>> LoadData()
+    {
+
+        Data = await service.GetAll(appCancellation.Token);
+        return Data;
+    }
+
+
+}
+
+

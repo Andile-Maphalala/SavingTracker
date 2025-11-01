@@ -1,0 +1,69 @@
+﻿@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Models.Enums
+@using SavingTracker.UI.Models.Lookups
+@using SavingTracker.UI.Services.Interfaces
+@using SavingTraker.App.Interfaces
+
+@inject IMemberService service
+@inject IContributionTypeService contributionTypeService
+@inject ISavingsPlanService savingPlanService
+
+<AutoForm TModel="MemberModel" Model="Model" FormMode="FormMode" OnSubmit="Submit" OnCancel="Cancel">
+    <MudGrid>
+        <MudItem xs="12" sm="12">
+            <MudTextField @bind-Value="Model.FullName" Label="Full Name" For="@(() => Model.FullName)" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <AutoSelect @bind-Value="Model.SavingsPlanId" Items="SavingPlanList" Label="Savings Plan" For="@(() => Model.SavingsPlanId)" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <AutoSelect @bind-Value="Model.ContributionTypeId" Items="ContributionTypeList" Label="Contribution Type" For="@(() => Model.ContributionTypeId)" Variant="Variant.Outlined" />
+        </MudItem>
+    </MudGrid>
+</AutoForm>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public MemberModel Model { get; set; } = new MemberModel();
+
+    [Parameter]
+    public FormModeEnum FormMode { get; set; }
+
+    private List<LookUpModel> ContributionTypeList = new List<LookUpModel>();
+    private List<LookUpModel> SavingPlanList = new List<LookUpModel>();
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var saving =  await savingPlanService.GetAll(appCancellation.Token);
+            SavingPlanList = saving.Select(x => new LookUpModel { Id = x.Id, Name = x.Name }).ToList();
+
+            var contribution = await contributionTypeService.GetAll(appCancellation.Token);
+            ContributionTypeList = contribution.Select(x => new LookUpModel { Id = x.Id, Name = $"{x.Name} - R{x.Amount} - {x.FrequencyName}" }).ToList();
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task Submit()
+    {
+        int result = 0;
+        switch (FormMode)
+        {
+            case FormModeEnum.Delete:
+                result = await service.Delete(Model.Id, appCancellation.Token);
+                break;
+            default:
+                result = await service.UpSert(Model, appCancellation.Token);
+                break;
+        }
+        MudDialog.Close(DialogResult.Ok(result));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
+

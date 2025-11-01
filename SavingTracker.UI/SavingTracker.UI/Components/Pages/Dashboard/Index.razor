@@ -1,0 +1,153 @@
+﻿@page "/dashboard";
+@page "/";
+@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Models.Common
+@using SavingTracker.UI.Models.Enums
+@using SavingTracker.UI.Models.Lookups
+@using SavingTracker.UI.Models.Summary
+@using SavingTraker.App.Interfaces
+
+@inject IDashboardService service;
+@inject IDialogService dialogService
+@inject ISavingsPlanService savingPlanService
+@inject IContributionTypeService contributionTypeservice
+
+<PageTitle>Dashboard</PageTitle>
+
+<MudContainer Class="mt-5 px-4" MaxWidth="MaxWidth.False">
+    <MudGrid>
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <AutoSelect TValue="int" Value="SelectedPlanId" Items="SavingPlanList" Label="Savings Plan" For="@(() => SelectedPlanId)" Variant="Variant.Outlined" ValueChanged="OnSavingSelect" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <AutoSelect TValue="int" Value="SelectedFreqency" Items="Frequencies" Label="Frequency" For="@(() => SelectedFreqency)" Variant="Variant.Outlined" ValueChanged="OnFrequencySelect" />
+            </MudItem>
+        </MudGrid>
+        @if (SelectedPlanId != 0)
+        {
+            <MudItem xs="12" sm="6" md="3">
+                <TotalNumber Total="Data.TotalMembers" Description="Total Members" ComponentColor="@Colors.Blue.Default" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <Total TotalValue="Data.TotalContribution" Description="Total Contribution" ComponentColor="@Colors.Green.Default" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <Total TotalValue="Data.TotalOutstandingAmount" Description="Total Outstanding" ComponentColor="@Colors.Red.Default" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <Total TotalValue="Data.PeriodIncome" Description="@PeriodDescription" ComponentColor="@Colors.Amber.Default" />
+            </MudItem>
+             <MudItem xs="12" sm="12" md="12">
+                <TotalNumber Total="Data.TotalPeriods" Description="Total Periods" ComponentColor="@Colors.Cyan.Default"  Icon="@Icons.Material.Filled.CalendarMonth"/>
+            </MudItem>
+            <MudItem xs="12" sm="12" md="12">
+                <AutoTable @ref="tableRef" TItem="MemberDashboardSummaryModel" OnAction="Actions" LoadData="LoadData" ShowAllActionsExceptBulk="false" ActionVisibilities="ActionVisibilities" IsAdmin="authService.IsLoggedIn"/>
+            </MudItem>
+        }
+
+    </MudGrid>
+</MudContainer>
+
+
+
+@code {
+    AutoTable<MemberDashboardSummaryModel> tableRef;
+
+    private DashboardSummaryModel Data = new DashboardSummaryModel();
+
+    private string PeriodDescription { get; set; }
+
+    private List<LookUpModel> SavingPlanList = new List<LookUpModel>();
+
+    private List<LookUpModel> Frequencies = new List<LookUpModel>();
+
+    private int SelectedPlanId { get; set; }
+
+    private int SelectedFreqency { get; set; } = 4;
+
+    private SavingsPlanModel SelectedPlan { get; set; }
+
+    private string FrequenyName { get; set; } = "Monthly";
+
+
+    private List<AutotableActionVisibilityModel> ActionVisibilities { get; set; } = new List<AutotableActionVisibilityModel>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.View, IsVisible = true });
+
+        PeriodDescription = $"{FrequenyName} Inome";
+
+        await LoadDropdownData();
+        await InvokeAsync(StateHasChanged);
+
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+        }
+    }
+    private async Task Actions(ActionModel<MemberDashboardSummaryModel> item)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<MemberDetailDialog>
+        {
+            { x => x.Data, item.Item.AllContributions },
+        };
+
+        var dialog = await dialogService.ShowAsync<MemberDetailDialog>( $" Contributions For {item.Item.MemberName}", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+        }
+    }
+
+    private async Task<List<MemberDashboardSummaryModel>> LoadData()
+    {
+        Data = await service.GetDashboardSummary(SelectedPlanId, SelectedFreqency, appCancellation.Token);
+        return Data.MemberSummaries;
+    }
+
+    private async Task OnSavingSelect(int value)
+    {
+        SelectedPlanId = value;
+        await RefreshDashboard();
+    }
+
+    private async Task OnFrequencySelect(int value)
+    {
+        SelectedFreqency = value;
+        FrequenyName = Frequencies.Where(x => x.Id == value).Select(x => x.Name).FirstOrDefault();
+        await RefreshDashboard();    
+    }
+
+    private async Task LoadDropdownData()
+    {
+        var saving = await savingPlanService.GetAll(appCancellation.Token);
+        SavingPlanList = saving.Select(x => new LookUpModel { Id = x.Id, Name = x.Name }).ToList();
+        Frequencies = contributionTypeservice.GetContributionFrequenyList();
+
+    }
+
+    private async Task RefreshDashboard()
+    {
+        if (SelectedPlanId == 0) return;
+
+        Data = await service.GetDashboardSummary(SelectedPlanId, SelectedFreqency, appCancellation.Token);
+
+        PeriodDescription = $"{FrequenyName} Income";
+
+        await InvokeAsync(StateHasChanged);
+
+        tableRef?.RefreshTable();
+    }
+}

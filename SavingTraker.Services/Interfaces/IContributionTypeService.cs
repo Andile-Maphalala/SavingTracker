@@ -1,4 +1,5 @@
 ﻿using SavingTraker.App.Dtos.CRUDs;
+using SavingTraker.App.Dtos.Lookup;
 
 namespace SavingTraker.App.Interfaces
 {
@@ -8,5 +9,6 @@ namespace SavingTraker.App.Interfaces
        Task<ContributionTypeDto?> GetById(int Id, CancellationToken cancellationToken);
        Task<int> UpSert(ContributionTypeDto dto, CancellationToken cancellationToken);
        Task<int> Delete(int Id, CancellationToken cancellationToken);
+       List<LookUpDto> GetContributionFrequenyList();
     }
 }

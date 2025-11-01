@@ -1,0 +1,84 @@
+﻿@page "/contribution";
+
+@using SavingTracker.UI.Components.CustomComponents
+@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Models.Common
+@using SavingTracker.UI.Services
+@using SavingTracker.UI.Services.Interfaces
+@using SavingTraker.App.Interfaces
+
+@inject IDialogService dialogService
+@inject IContributionService service
+@inject AuthService authService
+
+<MudPaper Class="p-4">
+    <AutoTable @ref="tableRef" TItem="ContributionModel" OnAction="Actions" LoadData="LoadData" ShowAllActions="true" IsAdmin="authService.IsLoggedIn" />
+</MudPaper>
+
+@code {
+    AutoTable<ContributionModel> tableRef;
+    private List<ContributionModel> Data = new List<ContributionModel>();
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+        }
+    }
+    private async Task Actions(ActionModel<ContributionModel> item)
+    {
+
+        if (item.Mode == Models.Enums.FormModeEnum.Create)
+        {
+            item.Item = new ContributionModel();
+        }
+
+        IDialogReference dialog;
+        if (item.Mode == Models.Enums.FormModeEnum.BulkCreate)
+        {
+            var options = new DialogOptions { CloseOnEscapeKey = true,  FullWidth = true};
+
+            var parameters = new DialogParameters<Bulk>
+            {
+                { x => x.FormMode, item.Mode }
+            };
+
+            dialog = await dialogService.ShowAsync<Bulk>(item.Mode.ToString(), parameters, options);
+        }
+        else
+        {
+            var options = new DialogOptions { CloseOnEscapeKey = true };
+
+            var parameters = new DialogParameters<Edit>
+            {
+                { x => x.Model, item.Item },
+                { x => x.FormMode, item.Mode }
+            };
+
+            dialog = await dialogService.ShowAsync<Edit>(item.Mode.ToString(), parameters, options);
+        }
+
+        
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await tableRef?.RefreshTable();
+        }
+    }
+
+    private async Task<List<ContributionModel>> LoadData()
+    {
+
+        Data = await service.GetAll(appCancellation.Token);
+        return Data;
+    }
+
+
+}
+
+
