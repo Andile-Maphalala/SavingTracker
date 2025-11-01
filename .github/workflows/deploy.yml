@@ -1,8 +1,8 @@
-name: Deploy to Home Server
+name: Deploy to Mini PC
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -11,14 +11,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Deploy to Home Server
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /c/Code/Projects/SavingTracker
-          git pull origin main
-          docker compose down
-          docker compose up -d --build
+    - name: Deploy Application
+      run: |
+        cd C:\Code\Projects\SavingTracker
+        git pull origin main
+        docker compose down
+        docker compose up -d --build
