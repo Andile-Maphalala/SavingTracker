@@ -20,8 +20,12 @@ namespace SavingTracker.UI.Models.Summary
         [CustomColumn(DisplayName = "Periods Paid", Order = 4)]
         public int PeriodsPaid { get; set; }
 
-        [CustomColumn(DisplayName = "Period Fee", Order = 5, FormatString = "N2")]
+        [CustomColumn(DisplayName = "Period Fee", Order = 6, FormatString = "N2")]
         public decimal PeriodFee { get; set; }
+
+        [CustomColumn(DisplayName = "Next Payment Date", Order = 5, FormatString = "dd/MM/yyyy")]
+        public DateTime NextExpectedDate { get; set; }
+
 
         [CustomColumn(Visible = false)]
         public List<ContributionSummaryModel> AllContributions { get; set; }

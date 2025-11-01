@@ -9,7 +9,7 @@ namespace SavingTracker.UI.Models.Summary
         [CustomColumn(DisplayName = "Id", Order = 0, Visible = false)]
         public int Id { get; set; }
 
-        [CustomColumn(DisplayName = "Date", Order = 1, FormatString = "yyyy/MM/dd")]
+        [CustomColumn(DisplayName = "Date", Order = 1, FormatString = "dd/MM/yyyy")]
         public DateTime Date { get; set; }
 
         [CustomColumn(DisplayName = "Amount", Order = 2, FormatString = "N2")]
