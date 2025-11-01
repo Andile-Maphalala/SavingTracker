@@ -9,6 +9,5 @@
         public int TotalPeriods { get; set; }
 
         public List<MemberDashboardSummaryModel> MemberSummaries { get; set; }
-
     }
 }
