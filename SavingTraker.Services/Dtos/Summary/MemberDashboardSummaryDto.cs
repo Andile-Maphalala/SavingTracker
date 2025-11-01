@@ -9,6 +9,7 @@ namespace SavingTraker.App.Dtos.Summary
         public decimal OustandingAmount { get; set; }
         public int PeriodsPaid { get; set; }
         public decimal PeriodFee { get; set; }
+        public DateTime NextExpectedDate { get; set; }
         public List<ContributionSummaryDto> AllContributions { get; set; }
     }
 }

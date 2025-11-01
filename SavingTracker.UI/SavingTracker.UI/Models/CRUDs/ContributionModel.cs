@@ -13,7 +13,7 @@ namespace SavingTracker.UI.Models.CRUDs
         [CustomColumn(DisplayName = "Member Name", Order = 2)]
         public string MemberName { get; set; }
 
-        [CustomColumn(DisplayName = "Date", Order = 3, FormatString = "yyyy/MM/dd")]
+        [CustomColumn(DisplayName = "Date", Order = 3, FormatString = "dd/MM/yyyy")]
         public DateTime? Date { get; set; }
 
         [CustomColumn(DisplayName = "Amount", Order = 4, FormatString = "N2")]

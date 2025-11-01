@@ -1,11 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SavingTracker.Data.Context;
 using SavingTracker.Data.Enums;
-using SavingTracker.Data.Models;
 using SavingTraker.App.Dtos.Summary;
 using SavingTraker.App.Exceptions;
 using SavingTraker.App.Interfaces;
-using System.Threading;
 
 namespace SavingTraker.App.Services
 {
@@ -43,6 +41,7 @@ namespace SavingTraker.App.Services
                 dto.TotalContributedAmount = member.Contributions.Sum(c => c.Amount);
                 dto.PeriodsPaid = CalulatePeriodsPaid(dto.TotalContributedAmount, dto.PeriodFee);
                 dto.OustandingAmount = CalculateOutandingAmount(dto.PeriodFee,frequency,dto.TotalContributedAmount,savingsPlan.StartDate);
+                dto.NextExpectedDate = GetNextExpectedDate(savingsPlan.StartDate, dto.PeriodsPaid, frequency);
                 dto.AllContributions = member.Contributions
                     .Select(c => new ContributionSummaryDto
                     {
@@ -166,6 +165,7 @@ namespace SavingTraker.App.Services
             }
         }
 
+
         private int GetTotalPeriods(DateTime startDate, ContributionFrequency frequency)
         {
             var currentDate = DateTime.Now;
@@ -190,6 +190,37 @@ namespace SavingTraker.App.Services
                     return(((currentDate.Year - startDate.Year) * 12) + currentDate.Month - startDate.Month) / 6;
                 case ContributionFrequency.Yearly:
                     return currentDate.Year - startDate.Year;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(frequency), frequency, "Unsupported contribution frequency");
+            }
+        }
+
+
+        private DateTime GetNextExpectedDate(DateTime startDate, int periodsPaid, ContributionFrequency frequency)
+        {
+            switch (frequency)
+            {
+                case ContributionFrequency.Daily:
+                    return startDate.AddDays(periodsPaid + 1);
+
+                case ContributionFrequency.Weekly:
+                    return startDate.AddDays((periodsPaid + 1) * 7);
+
+                case ContributionFrequency.BiWeekly:
+                    return startDate.AddDays((periodsPaid + 1) * 14);
+
+                case ContributionFrequency.Monthly:
+                    return startDate.AddMonths(periodsPaid + 1);
+
+                case ContributionFrequency.Quarterly:
+                    return startDate.AddMonths((periodsPaid + 1) * 3);
+
+                case ContributionFrequency.SemiAnnual:
+                    return startDate.AddMonths((periodsPaid + 1) * 6);
+
+                case ContributionFrequency.Yearly:
+                    return startDate.AddYears(periodsPaid + 1);
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(frequency), frequency, "Unsupported contribution frequency");
             }
