@@ -18,8 +18,9 @@ services:
       context: .
       dockerfile: SavingTracker.API/Dockerfile
     container_name: savingtracker-api
+    restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_ENVIRONMENT: "Prodduction"
       ConnectionStrings__ConnectionString: "Host=postgres;Port=5432;Database=SavingTrackerDatabase;Username=dev;Password=dev123;SSL Mode=Disable"
     ports:
       - "8080:8080"
@@ -31,6 +32,7 @@ services:
       context: .
       dockerfile: SavingTracker.UI/SavingTracker.UI/Dockerfile
     container_name: savingtracker-blazor
+    restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ApiBaseUrl: "http://api:8080"

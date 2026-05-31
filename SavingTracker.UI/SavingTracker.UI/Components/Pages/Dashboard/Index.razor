@@ -83,6 +83,7 @@
         PeriodDescription = $"{FrequenyName} Inome";
 
         await LoadDropdownData();
+        SelectedPlanId = SavingPlanList.FirstOrDefault()?.Id ?? 0;
         await InvokeAsync(StateHasChanged);
 
     }
@@ -92,7 +93,7 @@
     {
         if (firstRender)
         {
-
+            await RefreshDashboard();
         }
     }
     private async Task Actions(ActionModel<MemberDashboardSummaryModel> item)
@@ -133,7 +134,7 @@
     private async Task LoadDropdownData()
     {
         var saving = await savingPlanService.GetAll(appCancellation.Token);
-        SavingPlanList = saving.Select(x => new LookUpModel { Id = x.Id, Name = x.Name }).ToList();
+        SavingPlanList = saving.Select(x => new LookUpModel { Id = x.Id, Name = x.Name }).ToList();        
         Frequencies = contributionTypeservice.GetContributionFrequenyList();
 
     }
