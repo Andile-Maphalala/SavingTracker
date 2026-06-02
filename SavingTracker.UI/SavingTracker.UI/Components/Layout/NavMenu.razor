@@ -2,6 +2,7 @@
 @inject IAuthService AuthService
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -44,7 +45,32 @@
     private async Task Logout()
     {
         await AuthService.LogoutAsync(appCancellation.Token);
-        await ((ApiAuthenticationStateProvider)AuthStateProvider).NotifyLoggedOut();
-        NavManager.NavigateTo("/", true);
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("submitLogoutForm");
+        }
+        catch (TaskCanceledException)
+        {
+        }
+        catch (JSDisconnectedException)
+        {
+        }
     }
 }
+
+
+<script>
+    window.submitLogoutForm = function() {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/account/logout';
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'returnUrl';
+        input.value = '/login';
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    };
+</script>

@@ -16,9 +16,10 @@ namespace SavingTracker.UI.Controller
     [ApiController]
     public class AccountController(IAuthService authService, AppCancellationService appCancellationService) : ControllerBase
     {
-        [HttpGet("login")]
+        [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login(string username, string password, string returnUrl = "/")
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<IActionResult> Login([FromForm] string username, [FromForm] string password, [FromForm] string returnUrl = "/")
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}");
@@ -51,6 +52,14 @@ namespace SavingTracker.UI.Controller
                 });
 
             return LocalRedirect(returnUrl ?? "/");
+        }
+
+        [HttpPost("logout")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Logout([FromForm] string returnUrl = "/login")
+        {
+            await HttpContext.SignOutAsync("BlazorCookies");
+            return LocalRedirect(returnUrl);
         }
 
         [HttpGet("challenge")]

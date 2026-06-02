@@ -5,6 +5,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject HttpClient Http
 @layout EmptyLayout
+@inject IJSRuntime JSRuntime
 
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Authorization
@@ -81,7 +82,6 @@
 
         try
         {
-            // Just validate locally first if needed, then redirect to login API
             if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password))
             {
                 ErrorMessage = "Username and password are required.";
@@ -89,12 +89,24 @@
                 return;
             }
 
+
             // Direct redirect to the login API with both username and password
             var returnUrl = "/"; // or get from query string if you have one
 
-            NavManager.NavigateTo(
-                        $"/api/account/login?username={Uri.EscapeDataString(Username)}&password={Uri.EscapeDataString(Password)}&returnUrl={Uri.EscapeDataString(returnUrl)}",
-                        forceLoad: true);
+            // NavManager.NavigateTo(
+            //             $"/api/account/login?username={Uri.EscapeDataString(Username)}&password={Uri.EscapeDataString(Password)}&returnUrl={Uri.EscapeDataString(returnUrl)}",
+            //             forceLoad: true);
+
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("submitLoginForm", Username, Password, returnUrl);
+            }
+            catch (TaskCanceledException)
+            {
+            }
+            catch (JSDisconnectedException)
+            {
+            }
         }
         catch (Exception ex)
         {
@@ -104,3 +116,22 @@
         }
     }
 }
+
+
+<script>
+    window.submitLoginForm = function(username, password, returnUrl) {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/account/login';
+        var fields = { username, password, returnUrl };
+        for (var key in fields) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = fields[key];
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+    };
+</script>
