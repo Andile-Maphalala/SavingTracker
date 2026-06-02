@@ -1,10 +1,11 @@
 using Mapster;
 using MapsterMapper;
+using Microsoft.AspNetCore.Identity;
 using MudBlazor.Services;
 using SavingTracker.ApiClient;
 using SavingTracker.UI.Components;
 using SavingTracker.UI.Services;
-using SavingTracker.UI.Services.Interfaces;
+using System.Net;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,12 @@ typeAdapterConfig.Scan(Assembly.GetExecutingAssembly());
 // register the mapper as Singleton service for my application
 var mapperConfig = new Mapper(typeAdapterConfig);
 builder.Services.AddSingleton<IMapper>(mapperConfig);
+
+
+builder.Services.AddScoped<CookieContainer>();
+
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
+
 builder.Services.AddScoped(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();
@@ -26,15 +33,54 @@ builder.Services.AddScoped(sp =>
     return new SavingTrackerApiClient(httpClient);
 });
 
+builder.Services.AddScoped(sp =>
+{
+    var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
+    var request = httpContext?.Request;
+    var baseUrl = $"{request?.Scheme}://{request?.Host}";
+
+    var cookieContainer = new CookieContainer();
+
+    if (httpContext != null)
+    {
+        foreach (var cookie in httpContext.Request.Cookies)
+        {
+            cookieContainer.Add(
+                new Uri(baseUrl),
+                new Cookie(cookie.Key, cookie.Value));
+        }
+    }
+
+    var handler = new HttpClientHandler
+    {
+        CookieContainer = cookieContainer,
+        UseCookies = true
+    };
+
+    return new HttpClient(handler) { BaseAddress = new Uri(baseUrl) };
+});
+
 builder.Services.AddSingleton<AppCancellationService>();
-builder.Services.AddSingleton<AuthService>();
 
 
-
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+})
+.AddCookie(IdentityConstants.ApplicationScheme, options =>
+{
+    options.LoginPath = "/login";
+    options.AccessDeniedPath = "/access-denied";
+});
+builder.Services.AddAuthorization();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
@@ -53,11 +99,16 @@ else
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+app.UseRouting();        
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
+app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(SavingTracker.UI.Client._Imports).Assembly);
 
 app.Run();
+

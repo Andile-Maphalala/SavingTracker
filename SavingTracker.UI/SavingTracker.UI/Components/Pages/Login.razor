@@ -1,34 +1,115 @@
 ﻿@page "/login"
-@using SavingTracker.UI.Services
-@inject NavigationManager NavManager;
-@inject AuthService Auth
+@attribute [AllowAnonymous]
+@inject NavigationManager NavManager
+@inject IAuthService Auth
+@inject AuthenticationStateProvider AuthStateProvider
+@inject HttpClient Http
 
-<MudPaper Class="pa-4 mx-auto" Style="width:300px">
-    <MudTextField @bind-Value="Username" Label="Username" />
-    <MudTextField @bind-Value="Password" Label="Password" InputType="InputType.Password" />
-    <MudButton OnClick="OnLogin" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2">Login</MudButton>
-    @if (!string.IsNullOrEmpty(ErrorMessage))
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="py-8">
+    <MudPaper Class="pa-6" Elevation="3">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+            Saving Tracker
+        </MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6">
+            Family Savings Management
+        </MudText>
+
+        <EditForm Model="this" OnValidSubmit="OnLogin">
+            <DataAnnotationsValidator />
+
+            <MudTextField 
+                @bind-Value="Username" 
+                Label="Username" 
+                Variant="Variant.Outlined"
+                Margin="Margin.Normal"
+                FullWidth="true"
+                Disabled="IsLoading" />
+
+            <MudTextField 
+                @bind-Value="Password" 
+                Label="Password" 
+                InputType="InputType.Password"
+                Variant="Variant.Outlined"
+                Margin="Margin.Normal"
+                FullWidth="true"
+                Disabled="IsLoading" />
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-4" Variant="Variant.Filled">
+                    @ErrorMessage
+                </MudAlert>
+            }
+
+            <MudButton 
+                ButtonType="ButtonType.Submit" 
+                Variant="Variant.Filled" 
+                Color="Color.Primary" 
+                Size="Size.Large"
+                FullWidth="true"
+                Class="mt-6"
+                Disabled="IsLoading">
+                @if (IsLoading)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Logging in...</MudText>
+                }
+                else
+                {
+                    <MudText>Login</MudText>
+                }
+            </MudButton>
+        </EditForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string Username = "";
+    private string Password = "";
+    private string ErrorMessage = "";
+    private bool IsLoading = false;
+
+    private async Task OnLogin()
     {
-        <MudText Color="Color.Error">@ErrorMessage</MudText>
-    }
-</MudPaper>
+        ErrorMessage = "";
+        IsLoading = true;
 
-    @code {
-
-    private string Username;
-    private string Password;
-    private string ErrorMessage;
-
-    private void OnLogin()
-    {
-        if (!Auth.Login(Username, Password))
+        try
         {
-            ErrorMessage = "Invalid credentials";
+            var (success, user) = await Auth.LoginAsync(Username, Password, appCancellation.Token);
+
+            if (success && user != null)
+            {
+                var response = await Http.PostAsJsonAsync("/api/account/signin", user);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Step 3: Update the AuthenticationStateProvider
+                    await ((ApiAuthenticationStateProvider)AuthStateProvider).NotifyLoggedIn(user);
+
+                    NavManager.NavigateTo("/");
+                }
+                else
+                {
+                    ErrorMessage = "Failed to create session. Please try again.";
+                }
+                NavManager.NavigateTo("/");
+            }
+            else
+            {
+                ErrorMessage = "Invalid username or password.";
+            }
         }
-        else
+        catch (Exception ex)
         {
-
-            NavManager.NavigateTo("/", true);
+            ErrorMessage = "An error occurred. Please try again.";
+            Console.Error.WriteLine($"Login error: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 }

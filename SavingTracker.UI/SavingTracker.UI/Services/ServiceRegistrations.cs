@@ -1,4 +1,6 @@
-﻿using SavingTraker.App.Interfaces;
+﻿using Microsoft.AspNetCore.Components.Authorization;
+using SavingTracker.UI.Services.Interfaces;
+using SavingTraker.App.Interfaces;
 
 namespace SavingTracker.UI.Services
 {
@@ -6,11 +8,17 @@ namespace SavingTracker.UI.Services
     {
         public static IServiceCollection ConfigureServices(this IServiceCollection services)
         {
+            services.AddScoped<ILocalStorageService, LocalStorageService>();
+            services.AddScoped<IAuthService, AuthService>();
+
             services.AddScoped<IContributionService, ContributionService>();
             services.AddScoped<IMemberService, MemberService>();
             services.AddScoped<IContributionTypeService, ContributionTypeService>();
             services.AddScoped<ISavingsPlanService, SavingsPlanService>();
             services.AddScoped<IDashboardService, DashboardService>();
+
+            services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();
+
 
             return services;
         }

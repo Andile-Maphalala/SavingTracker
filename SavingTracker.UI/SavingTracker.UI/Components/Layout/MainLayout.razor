@@ -1,26 +1,43 @@
-﻿@inherits LayoutComponentBase
-
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudThemeProvider />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+@if (!_isInitialized)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <div class="page">
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+        <main>
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
     </div>
-
-    <main>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+}
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private bool _isInitialized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authProvider = (ApiAuthenticationStateProvider)AuthStateProvider;
+        await authProvider.InitializeAsync();
+        _isInitialized = true;
+    }
+}

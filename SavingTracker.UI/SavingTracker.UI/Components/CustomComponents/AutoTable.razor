@@ -1,5 +1,6 @@
 ﻿@using System.ComponentModel.DataAnnotations
 @using System.Reflection
+@using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 @using SavingTracker.UI.Models.Common
 @using SavingTracker.UI.Models.Enums
@@ -40,14 +41,18 @@ else
         <ToolBarContent>
             <MudGrid>
                 <MudItem xs="12" sm="9">
-                    @if (ShouldShowAction(FormModeEnum.Create) && IsAdmin)
-                    {
-                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add">Add</MudButton>
-                    }
-                    @if (ShouldShowAction(FormModeEnum.BulkCreate) && IsAdmin)
-                    {
-                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="BulkAdd">Bulk Add</MudButton>
-                    }
+                        <AuthorizeView Roles="Admin">
+                        @if (ShouldShowAction(FormModeEnum.Create))
+                        {
+                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add">Add</MudButton>
+                        }
+                        @if (ShouldShowAction(FormModeEnum.BulkCreate))
+                        {
+                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="BulkAdd">Bulk Add</MudButton>
+                        }
+                    </AuthorizeView>
+
+                    
                 </MudItem>
                 <MudItem xs="12" sm="3">
                     <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -117,9 +122,6 @@ else
 
     [Parameter] 
     public EventCallback<ActionModel<TItem>> OnAction { get; set; }
-
-    [Parameter]
-    public bool IsAdmin { get; set; } = false;
 
 
     private bool IsLoading { get; set; } = true;
@@ -247,7 +249,7 @@ else
                 builder.CloseComponent();
             });
         }
-        if (ShouldShowAction(FormModeEnum.Update) && IsAdmin)
+        if (ShouldShowAction(FormModeEnum.Update))
         {
             crudColumns.Add(item => builder =>
             {
@@ -263,7 +265,7 @@ else
                 builder.CloseComponent();
             });
         }
-        if (ShouldShowAction(FormModeEnum.Delete) && IsAdmin)
+        if (ShouldShowAction(FormModeEnum.Delete))
         {
             crudColumns.Add(item => builder =>
             {
