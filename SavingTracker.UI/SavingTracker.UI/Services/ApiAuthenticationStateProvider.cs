@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
+﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using SavingTracker.UI.Models.Auth;
+using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 
@@ -8,113 +10,107 @@ namespace SavingTracker.UI.Services
     public class ApiAuthenticationStateProvider : AuthenticationStateProvider
     {
         private readonly HttpClient _httpClient;
+        private readonly NavigationManager _navigationManager;
         private readonly ILogger<ApiAuthenticationStateProvider> _logger;
-        private UserInfoModel? _currentUser;
-
-        public ApiAuthenticationStateProvider(HttpClient httpClient, ILogger<ApiAuthenticationStateProvider> logger)
+        private AppCancellationService _cancellationService;
+        public ApiAuthenticationStateProvider(
+            HttpClient httpClient,
+            NavigationManager navigationManager,
+            ILogger<ApiAuthenticationStateProvider> logger,
+            AppCancellationService cancellationService)
         {
             _httpClient = httpClient;
+            _navigationManager = navigationManager;
             _logger = logger;
-        }
-
-        /// <summary>
-        /// Initializes authentication state by checking the Blazor server's HttpContext.User
-        /// </summary>
-        public async Task InitializeAsync()
-        {
-            try
-            {
-                var response = await _httpClient.GetFromJsonAsync<UserAuthResponse>("/api/account/user");
-
-                if (response?.IsAuthenticated == true)
-                {
-                    _logger.LogInformation("User {Name} already authenticated.", response.Name);
-                    NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-                }
-                else
-                {
-                    _currentUser = null;
-                    _logger.LogInformation("No authenticated user found.");
-                    NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-                }
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            {
-                _currentUser = null;
-                _logger.LogInformation("User not authenticated (401).");
-                NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error initializing authentication state");
-                _currentUser = null;
-                NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-            }
+            _cancellationService = cancellationService;
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             try
             {
-                if (_currentUser != null)
+                var response = await _httpClient.GetAsync("/api/account/user", _cancellationService.Token);
+                if (response.IsSuccessStatusCode)
                 {
-                    return new AuthenticationState(CreateClaimsPrincipal(_currentUser));
-                }
-
-                // Try to get current user from Blazor server
-                var response = await _httpClient.GetFromJsonAsync<UserAuthResponse>("/api/account/user");
-
-                if (response?.IsAuthenticated == true)
-                {
-                    _currentUser = new UserInfoModel
+                    var user = await response.Content.ReadFromJsonAsync<UserAuthResponse>();
+                    if (user?.IsAuthenticated == true)
                     {
-                        Username = response.Name ?? "",
-                        Roles = response.Roles ?? new List<string>()
-                    };
-                    return new AuthenticationState(CreateClaimsPrincipal(_currentUser));
+                        return BuildAuthState(user);
+                    }
                 }
-
-                return new AuthenticationState(new ClaimsPrincipal());
             }
-            catch
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
             {
-                return new AuthenticationState(new ClaimsPrincipal());
+                // Not authenticated — challenge will handle redirect
             }
+            catch (System.Text.Json.JsonException ex)
+            {
+                _logger.LogError(ex, "API returned invalid JSON. Check if server is returning error pages instead of JSON.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting auth state");
+            }
+
+            return Anonymous();
+        }
+
+        // Called from MainLayout.OnAfterRenderAsync
+        public async Task<AuthenticationState> ChallengeAuth()
+        {
+            var authState = await GetAuthenticationStateAsync();
+
+            if (authState?.User?.Identity?.IsAuthenticated != true)
+            {
+                var currentUri = _navigationManager.Uri;
+
+                // Prevent redirect loop
+                if (!currentUri.Contains("/login") &&
+                    !currentUri.Contains("/api/account/challenge"))
+                {
+                    _navigationManager.NavigateTo(
+                        $"/api/account/challenge?redirectUri={Uri.EscapeDataString(currentUri)}",
+                        forceLoad: true);
+                }
+            }
+
+            return authState;
         }
 
         public async Task NotifyLoggedIn(UserInfoModel user)
         {
-            _currentUser = user;
-            _logger.LogInformation("User {Username} logged in.", user.Username);
-            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+            var userAuthResponse = new UserAuthResponse
+            {
+                Name = user.Username,
+                IsAuthenticated = true,
+                Roles = user.Roles ?? new List<string>()
+            };
+            NotifyAuthenticationStateChanged(Task.FromResult(BuildAuthState(userAuthResponse)));
             await Task.CompletedTask;
         }
 
         public async Task NotifyLoggedOut()
         {
-            _currentUser = null;
-            _logger.LogInformation("User logged out.");
-            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+            NotifyAuthenticationStateChanged(Task.FromResult(Anonymous()));
             await Task.CompletedTask;
         }
 
-        private ClaimsPrincipal CreateClaimsPrincipal(UserInfoModel user)
+        private static AuthenticationState BuildAuthState(UserAuthResponse user)
         {
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Username),
-            };
-
-            foreach (var role in user.Roles)
-            {
+        {
+            new(ClaimTypes.Name, user.Name),
+        };
+            foreach (var role in user.Roles ?? new List<string>())
                 claims.Add(new Claim(ClaimTypes.Role, role));
-            }
 
-            var identity = new ClaimsIdentity(claims, "api");
-            return new ClaimsPrincipal(identity);
+            return new AuthenticationState(
+                new ClaimsPrincipal(new ClaimsIdentity(claims, "BlazorCookies")));
         }
-    }
 
+        private static AuthenticationState Anonymous()
+            => new(new ClaimsPrincipal(new ClaimsIdentity()));
+    }
     public class UserAuthResponse
     {
         public string? Name { get; set; }

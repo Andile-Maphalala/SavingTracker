@@ -8,6 +8,8 @@ namespace SavingTracker.UI.Services
     {
         public static IServiceCollection ConfigureServices(this IServiceCollection services)
         {
+            services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();
+
             services.AddScoped<ILocalStorageService, LocalStorageService>();
             services.AddScoped<IAuthService, AuthService>();
 
@@ -17,7 +19,7 @@ namespace SavingTracker.UI.Services
             services.AddScoped<ISavingsPlanService, SavingsPlanService>();
             services.AddScoped<IDashboardService, DashboardService>();
 
-            services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();
+            services.AddScoped<ApiAuthenticationStateProvider>();
 
 
             return services;

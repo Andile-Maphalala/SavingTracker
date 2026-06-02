@@ -1,18 +1,13 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
-@inject AuthenticationStateProvider AuthStateProvider
-
+@inject ApiAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
 <MudThemeProvider />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-@if (!_isInitialized)
-{
-    <MudProgressCircular Indeterminate="true" />
-}
-else
-{
+
     <div class="page">
         <div class="sidebar">
             <NavMenu />
@@ -23,7 +18,6 @@ else
             </article>
         </main>
     </div>
-}
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.
@@ -32,12 +26,16 @@ else
 </div>
 
 @code {
-    private bool _isInitialized = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var authProvider = (ApiAuthenticationStateProvider)AuthStateProvider;
-        await authProvider.InitializeAsync();
-        _isInitialized = true;
+        if (firstRender)
+        {
+            if (!NavigationManager.Uri.Contains("/login"))
+            {
+                await AuthStateProvider.ChallengeAuth();
+            }
+            await InvokeAsync(StateHasChanged);
+        }
     }
 }

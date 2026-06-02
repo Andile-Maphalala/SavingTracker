@@ -63,17 +63,28 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddSingleton<AppCancellationService>();
 
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = IdentityConstants.ApplicationScheme;
-    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
-})
-.AddCookie(IdentityConstants.ApplicationScheme, options =>
-{
-    options.LoginPath = "/login";
-    options.AccessDeniedPath = "/access-denied";
-});
+builder.Services.AddAuthentication("BlazorCookies")
+    .AddCookie("BlazorCookies", options =>
+    {
+        options.LoginPath = "/login";
+        options.AccessDeniedPath = "/access-denied";
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+        options.Events.OnRedirectToLogin = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = 401;
+                return Task.CompletedTask;
+            }
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        };
+    });
+
 builder.Services.AddAuthorization();
+
+builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()

@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SavingTracker.UI.Models.Auth;
+using SavingTracker.UI.Services;
+using SavingTracker.UI.Services.Interfaces;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -12,72 +14,106 @@ namespace SavingTracker.UI.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountController(IAuthService authService, AppCancellationService appCancellationService) : ControllerBase
     {
+        [HttpGet("login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login(string username, string password, string returnUrl = "/")
+        {
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+                return Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}");
+
+            // Use LoginAsync instead of GetCurrentUserAsync since we're not authenticated yet
+            var (success, user) = await authService.LoginAsync(username, password, appCancellationService.Token);
+
+            if (!success || user == null)
+                return Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}");
+
+            var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Name, user.Username),
+            new(ClaimTypes.Email, user.Email),
+        };
+
+            foreach (var role in user.Roles ?? new List<string>())
+                claims.Add(new Claim(ClaimTypes.Role, role));
+
+            await HttpContext.SignInAsync(
+                "BlazorCookies",
+                new ClaimsPrincipal(new ClaimsIdentity(claims, "BlazorCookies")),
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7),
+                    AllowRefresh = true,
+                    RedirectUri = returnUrl
+                });
+
+            return LocalRedirect(returnUrl ?? "/");
+        }
+
+        [HttpGet("challenge")]
+        [AllowAnonymous]
+        public async Task ChallengeAuth(string redirectUri)
+        {
+            var props = new AuthenticationProperties { RedirectUri = redirectUri };
+            await HttpContext.ChallengeAsync("BlazorCookies", props);
+        }
+
         [HttpGet("user")]
         [AllowAnonymous]
         public IActionResult GetUser()
         {
-            var roles = User.Claims
-                .Where(c => c.Type == ClaimTypes.Role)
-                .Select(c => c.Value)
-                .ToList();
+            if (User.Identity?.IsAuthenticated != true)
+                return Unauthorized();
 
-            return Ok(new
+            var response = new UserAuthResponse
             {
-                name = User.Identity?.Name,
-                isAuthenticated = User.Identity?.IsAuthenticated,
-                roles
-            });
+                Name = User.Identity?.Name,
+                IsAuthenticated = true,
+                Roles = User.Claims
+                    .Where(c => c.Type == ClaimTypes.Role)
+                    .Select(c => c.Value)
+                    .ToList()
+            };
+            return Ok(response);
         }
 
         [HttpPost("signin")]
         [AllowAnonymous]
-        public async Task<IActionResult> SignIn([FromBody] UserInfoModel? request)
+        public async Task<IActionResult> SignIn([FromBody] UserInfoModel request)
         {
+            Console.WriteLine($"=== SignIn called for {request?.Username} ===");
+
             if (request == null)
             {
-                return BadRequest("Invalid user data");
+                Console.WriteLine("=== Request is NULL ===");
+                return BadRequest();
             }
 
-            try
-            {
-                // Create claims for the authenticated user
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, request.Id.ToString()),
-                    new Claim(ClaimTypes.Name, request.Username),
-                    new Claim(ClaimTypes.Email, request.Email),
-                    new Claim(ClaimTypes.GivenName, request.FirstName),
-                    new Claim(ClaimTypes.Surname, request.LastName)
-                };
+            var claims = new List<Claim>
+    {
+        new(ClaimTypes.NameIdentifier, request.Id),
+        new(ClaimTypes.Name, request.Username),
+        new(ClaimTypes.Email, request.Email),
+    };
 
-                // Add role claims
-                foreach (var role in request.Roles ?? new List<string>())
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, role));
-                }
+            foreach (var role in request.Roles ?? new List<string>())
+                claims.Add(new Claim(ClaimTypes.Role, role));
 
-                var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
-                var authProperties = new AuthenticationProperties
+            await HttpContext.SignInAsync(
+                "BlazorCookies",
+                new ClaimsPrincipal(new ClaimsIdentity(claims, "BlazorCookies")),
+                new AuthenticationProperties
                 {
                     IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
-                };
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7),
+                    AllowRefresh = true
+                });
 
-
-                // Sign in the user on the Blazor server
-                await HttpContext.SignInAsync(
-                   IdentityConstants.ApplicationScheme,
-                    new ClaimsPrincipal(claimsIdentity),
-                    authProperties);
-
-                return Ok(new { success = true, message = "User signed in successfully" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, message = ex.Message });
-            }
+            Console.WriteLine("=== SignIn completed ===");
+            return Ok(new { success = true });
         }
     }
 }
