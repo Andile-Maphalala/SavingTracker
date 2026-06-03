@@ -29,7 +29,11 @@
                 Variant="Variant.Outlined"
                 Margin="Margin.Normal"
                 FullWidth="true"
-                Disabled="IsLoading" />
+                Disabled="IsLoading"
+                HelperText="@(Username.Length > 0 && Username.Length < MinUsernameLength ? $"Minimum {MinUsernameLength} characters" : "")"
+                HelperTextOnFocus="true"
+                Error="@(!string.IsNullOrEmpty(GetUsernameError()))"
+                ErrorText="@GetUsernameError()" />
 
             <MudTextField 
                 @bind-Value="Password" 
@@ -38,7 +42,11 @@
                 Variant="Variant.Outlined"
                 Margin="Margin.Normal"
                 FullWidth="true"
-                Disabled="IsLoading" />
+                Disabled="IsLoading"
+                HelperText="@(Password.Length > 0 && Password.Length < MinPasswordLength ? $"Minimum {MinPasswordLength} characters" : "")"
+                HelperTextOnFocus="true"
+                Error="@(!string.IsNullOrEmpty(GetPasswordError()))"
+                ErrorText="@GetPasswordError()" />
 
             @if (!string.IsNullOrEmpty(ErrorMessage))
             {
@@ -54,7 +62,7 @@
                 Size="Size.Large"
                 FullWidth="true"
                 Class="mt-6"
-                Disabled="IsLoading">
+                Disabled="IsLoading || !IsFormValid()">
                 @if (IsLoading)
                 {
                     <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
@@ -70,10 +78,41 @@
 </MudContainer>
 
 @code {
+    private const int MinUsernameLength = 3;
+    private const int MinPasswordLength = 6;
+
     private string Username = "";
     private string Password = "";
     private string ErrorMessage = "";
     private bool IsLoading = false;
+
+    private string GetUsernameError()
+    {
+        if (string.IsNullOrWhiteSpace(Username))
+            return "Username is required.";
+
+        if (Username.Length < MinUsernameLength)
+            return $"Username must be at least {MinUsernameLength} characters.";
+
+        return "";
+    }
+
+    private string GetPasswordError()
+    {
+        if (string.IsNullOrWhiteSpace(Password))
+            return "Password is required.";
+
+        if (Password.Length < MinPasswordLength)
+            return $"Password must be at least {MinPasswordLength} characters.";
+
+        return "";
+    }
+
+    private bool IsFormValid()
+    {
+        return string.IsNullOrEmpty(GetUsernameError()) && 
+               string.IsNullOrEmpty(GetPasswordError());
+    }
 
     private async Task OnLogin()
     {
@@ -82,24 +121,18 @@
 
         try
         {
-            if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password))
+            if (!IsFormValid())
             {
-                ErrorMessage = "Username and password are required.";
+                ErrorMessage = GetUsernameError() ?? GetPasswordError() ?? "Invalid input.";
                 IsLoading = false;
                 return;
             }
 
-
-            // Direct redirect to the login API with both username and password
-            var returnUrl = "/"; // or get from query string if you have one
-
-            // NavManager.NavigateTo(
-            //             $"/api/account/login?username={Uri.EscapeDataString(Username)}&password={Uri.EscapeDataString(Password)}&returnUrl={Uri.EscapeDataString(returnUrl)}",
-            //             forceLoad: true);
+            var returnUrl = "/";
 
             try
             {
-                await JSRuntime.InvokeVoidAsync("submitLoginForm", Username, Password, returnUrl);
+                await JSRuntime.InvokeVoidAsync("submitLoginForm", appCancellation.Token, Username, Password, returnUrl);
             }
             catch (TaskCanceledException)
             {

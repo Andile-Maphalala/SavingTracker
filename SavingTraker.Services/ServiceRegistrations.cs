@@ -9,6 +9,10 @@ namespace SavingTraker.App
     {
         public static IServiceCollection ConfigureApplicationServices(this IServiceCollection services)
         {
+            // Authentication & Validation
+            services.AddScoped<IAuthValidationService, AuthValidationService>();
+
+            // Business Logic Services
             services.AddScoped<IContributionService, ContributionService>();
             services.AddScoped<IMemberService, MemberService>();
             services.AddScoped<IContributionTypeService, ContributionTypeService>();

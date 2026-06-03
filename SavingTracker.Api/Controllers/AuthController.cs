@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SavingTracker.Api.Models;
 using SavingTracker.Data.Models;
+using SavingTraker.App.Interfaces;
 
 namespace SavingTracker.Api.Controllers
 {
@@ -10,7 +11,12 @@ namespace SavingTracker.Api.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController(UserManager<ApplicationUser> userManager,SignInManager<ApplicationUser> signInManager,RoleManager<IdentityRole> roleManager,ILogger<AuthController> logger) : ControllerBase
+    public class AuthController(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        RoleManager<IdentityRole> roleManager,
+        IAuthValidationService validationService,
+        ILogger<AuthController> logger) : ControllerBase
     {
         /// <summary>
         /// Authenticates a user with the provided credentials.
@@ -34,6 +40,28 @@ namespace SavingTracker.Api.Controllers
 
             try
             {
+                // Validate username
+                var (usernameValid, usernameError) = validationService.ValidateUsername(request.Username);
+                if (!usernameValid)
+                {
+                    return BadRequest(new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = usernameError
+                    });
+                }
+
+                // Validate password
+                var (passwordValid, passwordError) = validationService.ValidatePassword(request.Password);
+                if (!passwordValid)
+                {
+                    return BadRequest(new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = passwordError
+                    });
+                }
+
                 var user = await userManager.FindByNameAsync(request.Username);
                 if (user == null || !user.IsActive)
                 {
@@ -119,6 +147,39 @@ namespace SavingTracker.Api.Controllers
 
             try
             {
+                // Validate username
+                var (usernameValid, usernameError) = validationService.ValidateUsername(request.Username);
+                if (!usernameValid)
+                {
+                    return BadRequest(new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = usernameError
+                    });
+                }
+
+                // Validate password
+                var (passwordValid, passwordError) = validationService.ValidatePassword(request.Password);
+                if (!passwordValid)
+                {
+                    return BadRequest(new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = passwordError
+                    });
+                }
+
+                // Validate email
+                var (emailValid, emailError) = validationService.ValidateEmail(request.Email);
+                if (!emailValid)
+                {
+                    return BadRequest(new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = emailError
+                    });
+                }
+
                 var userExists = await userManager.FindByNameAsync(request.Username);
                 if (userExists != null)
                 {

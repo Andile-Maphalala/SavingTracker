@@ -1,0 +1,312 @@
+@page "/register"
+@attribute [Authorize(Roles = "Admin")]
+@inject IAuthService AuthService
+@inject NavigationManager NavManager
+@inject AppCancellationService AppCancellation
+@layout MainLayout
+
+@using Microsoft.AspNetCore.Authorization
+@using SavingTracker.UI.Components.Layout
+
+<PageTitle>Register User</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="py-8">
+    <MudPaper Class="pa-6" Elevation="3">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+            Register New User
+        </MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6">
+            Create a new user account
+        </MudText>
+
+        <EditForm Model="this" OnValidSubmit="OnRegister">
+            <DataAnnotationsValidator />
+
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField 
+                        @bind-Value="FirstName" 
+                        Label="First Name" 
+                        Variant="Variant.Outlined"
+                        Margin="Margin.Normal"
+                        FullWidth="true"
+                        Disabled="IsLoading"
+                        Error="@(!string.IsNullOrEmpty(GetFirstNameError()))"
+                        ErrorText="@GetFirstNameError()" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField 
+                        @bind-Value="LastName" 
+                        Label="Last Name" 
+                        Variant="Variant.Outlined"
+                        Margin="Margin.Normal"
+                        FullWidth="true"
+                        Disabled="IsLoading"
+                        Error="@(!string.IsNullOrEmpty(GetLastNameError()))"
+                        ErrorText="@GetLastNameError()" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField 
+                        @bind-Value="Username" 
+                        Label="Username" 
+                        Variant="Variant.Outlined"
+                        Margin="Margin.Normal"
+                        FullWidth="true"
+                        Disabled="IsLoading"
+                        HelperText="@(Username.Length > 0 && Username.Length < MinUsernameLength ? $"Minimum {MinUsernameLength} characters" : "")"
+                        HelperTextOnFocus="true"
+                        Error="@(!string.IsNullOrEmpty(GetUsernameError()))"
+                        ErrorText="@GetUsernameError()" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField 
+                        @bind-Value="Email" 
+                        Label="Email" 
+                        InputType="InputType.Email"
+                        Variant="Variant.Outlined"
+                        Margin="Margin.Normal"
+                        FullWidth="true"
+                        Disabled="IsLoading"
+                        Error="@(!string.IsNullOrEmpty(GetEmailError()))"
+                        ErrorText="@GetEmailError()" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField 
+                        @bind-Value="Password" 
+                        Label="Password" 
+                        InputType="InputType.Password"
+                        Variant="Variant.Outlined"
+                        Margin="Margin.Normal"
+                        FullWidth="true"
+                        Disabled="IsLoading"
+                        HelperText="@(Password.Length > 0 && Password.Length < MinPasswordLength ? $"Minimum {MinPasswordLength} characters" : "")"
+                        HelperTextOnFocus="true"
+                        Error="@(!string.IsNullOrEmpty(GetPasswordError()))"
+                        ErrorText="@GetPasswordError()" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField 
+                        @bind-Value="ConfirmPassword" 
+                        Label="Confirm Password" 
+                        InputType="InputType.Password"
+                        Variant="Variant.Outlined"
+                        Margin="Margin.Normal"
+                        FullWidth="true"
+                        Disabled="IsLoading"
+                        Error="@(!string.IsNullOrEmpty(GetConfirmPasswordError()))"
+                        ErrorText="@GetConfirmPasswordError()" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudSelect 
+                        @bind-Value="SelectedRole" 
+                        Label="Role" 
+                        Variant="Variant.Outlined"
+                        Margin="Margin.Normal"
+                        FullWidth="true"
+                        Disabled="IsLoading">
+                        <MudSelectItem Value="@("Admin")">Admin</MudSelectItem>
+                        <MudSelectItem Value="@("Member")">Member</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+
+            @if (!string.IsNullOrEmpty(SuccessMessage))
+            {
+                <MudAlert Severity="Severity.Success" Class="mt-4" Variant="Variant.Filled">
+                    @SuccessMessage
+                </MudAlert>
+            }
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-4" Variant="Variant.Filled">
+                    @ErrorMessage
+                </MudAlert>
+            }
+
+            <div Class="mt-6 d-flex gap-4">
+                <MudButton 
+                    ButtonType="ButtonType.Submit" 
+                    Variant="Variant.Filled" 
+                    Color="Color.Primary"
+                    Size="Size.Large"
+                    FullWidth="true"
+                    Disabled="IsLoading || !IsFormValid()">
+                    @if (IsLoading)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Registering...</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Register User</MudText>
+                    }
+                </MudButton>
+
+                <MudButton 
+                    Variant="Variant.Outlined" 
+                    Color="Color.Default"
+                    Size="Size.Large"
+                    FullWidth="true"
+                    Disabled="IsLoading"
+                    OnClick="OnCancel">
+                    Cancel
+                </MudButton>
+            </div>
+        </EditForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private const int MinUsernameLength = 3;
+    private const int MinPasswordLength = 6;
+
+    private string FirstName = "";
+    private string LastName = "";
+    private string Username = "";
+    private string Email = "";
+    private string Password = "";
+    private string ConfirmPassword = "";
+    private string SelectedRole = "Member";
+    private string ErrorMessage = "";
+    private string SuccessMessage = "";
+    private bool IsLoading = false;
+
+    private string GetFirstNameError()
+    {
+        if (string.IsNullOrWhiteSpace(FirstName))
+            return "First name is required.";
+
+        return "";
+    }
+
+    private string GetLastNameError()
+    {
+        if (string.IsNullOrWhiteSpace(LastName))
+            return "Last name is required.";
+
+        return "";
+    }
+
+    private string GetUsernameError()
+    {
+        if (string.IsNullOrWhiteSpace(Username))
+            return "Username is required.";
+
+        if (Username.Length < MinUsernameLength)
+            return $"Username must be at least {MinUsernameLength} characters.";
+
+        return "";
+    }
+
+    private string GetEmailError()
+    {
+        if (string.IsNullOrWhiteSpace(Email))
+            return "Email is required.";
+
+        if (!Email.Contains("@") || !Email.Contains("."))
+            return "Email format is invalid.";
+
+        return "";
+    }
+
+    private string GetPasswordError()
+    {
+        if (string.IsNullOrWhiteSpace(Password))
+            return "Password is required.";
+
+        if (Password.Length < MinPasswordLength)
+            return $"Password must be at least {MinPasswordLength} characters.";
+
+        return "";
+    }
+
+    private string GetConfirmPasswordError()
+    {
+        if (string.IsNullOrWhiteSpace(ConfirmPassword))
+            return "Please confirm your password.";
+
+        if (Password != ConfirmPassword)
+            return "Passwords do not match.";
+
+        return "";
+    }
+
+    private bool IsFormValid()
+    {
+        return string.IsNullOrEmpty(GetFirstNameError()) &&
+               string.IsNullOrEmpty(GetLastNameError()) &&
+               string.IsNullOrEmpty(GetUsernameError()) &&
+               string.IsNullOrEmpty(GetEmailError()) &&
+               string.IsNullOrEmpty(GetPasswordError()) &&
+               string.IsNullOrEmpty(GetConfirmPasswordError());
+    }
+
+    private async Task OnRegister()
+    {
+        ErrorMessage = "";
+        SuccessMessage = "";
+        IsLoading = true;
+
+        try
+        {
+            if (!IsFormValid())
+            {
+                ErrorMessage = "Please fix all validation errors.";
+                IsLoading = false;
+                return;
+            }
+
+            var (success, message) = await AuthService.RegisterAsync(
+                Username, 
+                Email, 
+                Password, 
+                FirstName, 
+                LastName, 
+                SelectedRole, 
+                AppCancellation.Token);
+
+            if (success)
+            {
+                SuccessMessage = $"User {Username} registered successfully!";
+
+                // Clear form
+                FirstName = "";
+                LastName = "";
+                Username = "";
+                Email = "";
+                Password = "";
+                ConfirmPassword = "";
+                SelectedRole = "Member";
+
+                // Redirect after a short delay
+                await Task.Delay(2000);
+                NavManager.NavigateTo("/members");
+            }
+            else
+            {
+                ErrorMessage = message ?? "Registration failed. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "An error occurred. Please try again.";
+            Console.Error.WriteLine($"Registration error: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void OnCancel()
+    {
+        NavManager.NavigateTo("/members");
+    }
+}

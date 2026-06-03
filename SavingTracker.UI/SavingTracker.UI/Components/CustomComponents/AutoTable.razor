@@ -1,11 +1,12 @@
-﻿@using System.ComponentModel.DataAnnotations
-@using System.Reflection
+﻿@using System.Reflection
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 @using SavingTracker.UI.Models.Common
 @using SavingTracker.UI.Models.Enums
 @using SavingTracker.UI.Services
 @typeparam TItem
+@inject AuthenticationStateProvider AuthStateProvider
 
 @if (IsLoading)
 {
@@ -131,10 +132,16 @@ else
     private List<PropertyInfo> SearchableProps = new();
     private List<ColumnDefinition> VisibleColumns = new();
     private List<RenderFragment<TItem>> CrudColumn { get; set; } = default!;
-
+    private bool IsAdmin { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var roles = authState.User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value);
+        if(roles.Contains("Admin"))
+        {
+            IsAdmin = true;
+        }
 
         await RefreshTable();
         VisibleColumns = typeof(TItem)
@@ -249,7 +256,7 @@ else
                 builder.CloseComponent();
             });
         }
-        if (ShouldShowAction(FormModeEnum.Update))
+        if (ShouldShowAction(FormModeEnum.Update) && IsAdmin)
         {
             crudColumns.Add(item => builder =>
             {
@@ -265,7 +272,7 @@ else
                 builder.CloseComponent();
             });
         }
-        if (ShouldShowAction(FormModeEnum.Delete))
+        if (ShouldShowAction(FormModeEnum.Delete) && IsAdmin)
         {
             crudColumns.Add(item => builder =>
             {

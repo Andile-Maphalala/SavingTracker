@@ -34,6 +34,7 @@
             </AuthorizeView>
             <AuthorizeView Roles="Admin">
                 <NavLink class="nav-link" href="/members">Members</NavLink>
+                <NavLink class="nav-link" href="/register">Register User</NavLink>
             </AuthorizeView>
         </div>
     </nav>
@@ -48,7 +49,7 @@
 
         try
         {
-            await JSRuntime.InvokeVoidAsync("submitLogoutForm");
+            await JSRuntime.InvokeVoidAsync("submitLogoutForm", appCancellation.Token);
         }
         catch (TaskCanceledException)
         {
