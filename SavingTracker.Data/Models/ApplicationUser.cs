@@ -28,5 +28,8 @@ namespace SavingTracker.Data.Models
         /// Gets or sets the date the user was last modified.
         /// </summary>
         public DateTime? LastModifiedAt { get; set; }
+
+        public virtual ICollection<UserSavingsPlan> UserSavingsPlans { get; set; }
+
     }
 }

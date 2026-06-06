@@ -1,5 +1,5 @@
 ﻿@page "/savingsplans";
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin")]
 
 @using SavingTracker.UI.Components.CustomComponents
 @using SavingTracker.UI.Models.CRUDs

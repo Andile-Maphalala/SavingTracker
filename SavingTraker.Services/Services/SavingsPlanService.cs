@@ -9,32 +9,49 @@ using SavingTraker.App.Interfaces;
 
 namespace SavingTraker.App.Services
 {
-    public class SavingsPlanService : ISavingsPlanService
+    public class SavingsPlanService(AppDbContext db, IUserInfo userInfo) : ISavingsPlanService
     {
-        private readonly AppDbContext _db;
-
-        public SavingsPlanService(AppDbContext db)
-        {
-            _db = db;
-        }
 
         public async Task<List<SavingsPlanDto>> GetAll(CancellationToken cancellationToken)
         {
-            return await _db.SavingsPlans
-                .Select(sp => new SavingsPlanDto
-                {
-                    Id = sp.Id,
-                    Name = sp.Name,
-                    Description = sp.Description,
-                    TargetAmount = sp.TargetAmount,
-                    StartDate = sp.StartDate,
-                    EndDate = sp.EndDate
-                }).ToListAsync(cancellationToken);
+            if (userInfo.IsAdmin())
+            {
+                return await db.SavingsPlans
+                    .Select(sp => new SavingsPlanDto
+                    {
+                        Id = sp.Id,
+                        Name = sp.Name,
+                        Description = sp.Description,
+                        TargetAmount = sp.TargetAmount,
+                        StartDate = sp.StartDate,
+                        EndDate = sp.EndDate
+                    }).ToListAsync(cancellationToken);
+            }
+            else
+            {
+                var userId = userInfo.GetUserId();
+                return await db.UserSavingsPlans
+                    .Include(sp => sp.SavingsPlan)
+                    .Where(sp => sp.UserId == userId)
+                    .Select(sp => new SavingsPlanDto
+                    {
+                        Id = sp.SavingsPlan.Id,
+                        Name = sp.SavingsPlan.Name,
+                        Description = sp.SavingsPlan.Description,
+                        TargetAmount = sp.SavingsPlan.TargetAmount,
+                        StartDate = sp.SavingsPlan.StartDate,
+                        EndDate = sp.SavingsPlan.EndDate
+                    }).ToListAsync(cancellationToken);
+            }
         }
 
         public async Task<SavingsPlanDto> GetById(int Id, CancellationToken cancellationToken)
         {
-            var entity = await _db.SavingsPlans.FindAsync(Id, cancellationToken);
+            if (!userInfo.IsAdmin())
+            {
+                throw new Exception("Access denied. Tried to perform unauthorized action.");
+            }
+            var entity = await db.SavingsPlans.FindAsync(Id, cancellationToken);
 
             if(entity == null)
             {
@@ -53,7 +70,11 @@ namespace SavingTraker.App.Services
 
         public async Task<int> UpSert(SavingsPlanDto dto, CancellationToken cancellationToken)
         {
-            var entity = await _db.SavingsPlans.FindAsync(dto.Id, cancellationToken);
+            if (!userInfo.IsAdmin())
+            {
+                throw new Exception("Access denied. Tried to perform unauthorized action.");
+            }
+            var entity = await db.SavingsPlans.FindAsync(dto.Id, cancellationToken);
             if (entity == null)
             {
                 entity = new SavingsPlan
@@ -69,7 +90,7 @@ namespace SavingTraker.App.Services
                     entity.EndDate = DateTime.SpecifyKind(entity.EndDate.Value, DateTimeKind.Utc);
                 }
 
-                _db.SavingsPlans.Add(entity);
+                db.SavingsPlans.Add(entity);
             }
             else
             {
@@ -82,20 +103,24 @@ namespace SavingTraker.App.Services
                     entity.EndDate = DateTime.SpecifyKind(entity.EndDate.Value, DateTimeKind.Utc);
                 }
             }
-            await _db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
 
             return entity.Id;
         }
 
         public async Task<int> Delete(int Id, CancellationToken cancellationToken)
         {
-            var entity = await _db.SavingsPlans.FindAsync(Id, cancellationToken);
+            if (!userInfo.IsAdmin())
+            {
+                throw new Exception("Access denied. Tried to perform unauthorized action.");
+            }
+            var entity = await db.SavingsPlans.FindAsync(Id, cancellationToken);
             if (entity == null)
             {
                 throw new NotFoundException("Savings Plan", Id);
             }
-            _db.SavingsPlans.Remove(entity);
-            return await _db.SaveChangesAsync(cancellationToken);
+            db.SavingsPlans.Remove(entity);
+            return await db.SaveChangesAsync(cancellationToken);
 
         }
     }

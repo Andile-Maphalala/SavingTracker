@@ -2,7 +2,6 @@
 
 using Microsoft.EntityFrameworkCore;
 using SavingTracker.Data.Context;
-using SavingTracker.Data.Enums;
 using SavingTracker.Data.Models;
 using SavingTraker.App.Common.Helpers;
 using SavingTraker.App.Dtos.CRUDs;
@@ -12,18 +11,12 @@ using SavingTraker.App.Interfaces;
 namespace SavingTraker.App.Services
 {
 
-    public class MemberService : IMemberService
+    public class MemberService(IUserInfo userInfo, AppDbContext db) : IMemberService
     {
-        private readonly AppDbContext _db;
-
-        public MemberService(AppDbContext db)
-        {
-            _db = db;
-        }
 
         public async Task<List<MemberDto>> GetAll(CancellationToken cancellationToken)
         {
-            return await _db.Members
+            return await db.Members
                 .Select(m => new MemberDto
                 {
                     Id = m.Id,
@@ -40,7 +33,7 @@ namespace SavingTraker.App.Services
 
         public async Task<MemberDto?> GetById(int Id, CancellationToken cancellationToken)
         {
-            var entity = await _db.Members.FindAsync(Id, cancellationToken);
+            var entity = await db.Members.FindAsync(Id, cancellationToken);
             if (entity == null)
             {
                 throw new NotFoundException("Member", Id);
@@ -61,7 +54,11 @@ namespace SavingTraker.App.Services
 
         public async Task<int> UpSert(MemberDto dto, CancellationToken cancellationToken)
         {
-            var entity = await _db.Members.FindAsync(dto.Id, cancellationToken);
+            if (!userInfo.IsAdmin())
+            {
+                throw new Exception("Access denied. Tried to perform unauthorized action.");
+            }
+            var entity = await db.Members.FindAsync(dto.Id, cancellationToken);
             if (entity == null)
             {
                 entity = new Member
@@ -70,7 +67,7 @@ namespace SavingTraker.App.Services
                     SavingsPlanId = dto.SavingsPlanId,
                     ContributionTypeId = dto.ContributionTypeId
                 };
-                _db.Members.Add(entity);
+                db.Members.Add(entity);
             }
             else
             {
@@ -78,24 +75,32 @@ namespace SavingTraker.App.Services
                 entity.SavingsPlanId = dto.SavingsPlanId;
                 entity.ContributionTypeId = dto.ContributionTypeId;
             }
-            await _db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
             return entity.Id;
         }
 
         public async Task<int> Delete(int Id, CancellationToken cancellationToken)
         {
-            var entity = await _db.Members.FindAsync(Id, cancellationToken);
+            if (!userInfo.IsAdmin())
+            {
+                throw new Exception("Access denied. Tried to perform unauthorized action.");
+            }
+            var entity = await db.Members.FindAsync(Id, cancellationToken);
             
             if (entity == null)
             {
                 throw new NotFoundException("Member", Id);
             }
-            _db.Members.Remove(entity);
-            return await _db.SaveChangesAsync(cancellationToken);
+            db.Members.Remove(entity);
+            return await db.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<List<int>> BulkUpsert(List<MemberDto> dtos, CancellationToken cancellationToken)
         {
+            if (!userInfo.IsAdmin())
+            {
+                throw new Exception("Access denied. Tried to perform unauthorized action.");
+            }
             List<int> ids = new List<int>();
             foreach (var dto in dtos)
             {

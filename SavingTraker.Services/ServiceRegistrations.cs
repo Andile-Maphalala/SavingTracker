@@ -11,6 +11,7 @@ namespace SavingTraker.App
         {
             // Authentication & Validation
             services.AddScoped<IAuthValidationService, AuthValidationService>();
+            services.AddScoped<IUserInfo, UserInfo>();
 
             // Business Logic Services
             services.AddScoped<IContributionService, ContributionService>();
@@ -18,6 +19,8 @@ namespace SavingTraker.App
             services.AddScoped<IContributionTypeService, ContributionTypeService>();
             services.AddScoped<ISavingsPlanService, SavingsPlanService>();
             services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IUserSavingPlanService, UserSavingPlanService>();
 
             return services;
         }
