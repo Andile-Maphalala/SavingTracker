@@ -23,6 +23,9 @@ namespace SavingTracker.UI
             services.AddScoped<IContributionTypeService, ContributionTypeService>();
             services.AddScoped<ISavingsPlanService, SavingsPlanService>();
             services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<IUserSavingsPlanService, UserSavingsPlanService>();
+            services.AddScoped<IUserService, UserService>();
 
             return services;
         }
@@ -46,12 +49,23 @@ namespace SavingTracker.UI
         {
             var apiBaseUrl = configuration["ApiBaseUrl"];
 
-            // API Client (with cookie container for API calls)
             services.AddScoped<CookieContainer>();
             services.AddScoped(sp =>
             {
-                var cookieContainer = sp.GetRequiredService<CookieContainer>();
-                var httpClient = new HttpClient { BaseAddress = new Uri(apiBaseUrl) };
+                var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
+                var apiBaseUrl = configuration["ApiBaseUrl"];
+
+                var cookieContainer = new CookieContainer();
+                if (httpContext != null)
+                {
+                    foreach (var cookie in httpContext.Request.Cookies)
+                    {
+                        cookieContainer.Add(new Uri(apiBaseUrl!), new Cookie(cookie.Key, cookie.Value));
+                    }
+                }
+
+                var handler = new HttpClientHandler { CookieContainer = cookieContainer, UseCookies = true };
+                var httpClient = new HttpClient(handler) { BaseAddress = new Uri(apiBaseUrl!) };
                 return new SavingTrackerApiClient(httpClient);
             });
 

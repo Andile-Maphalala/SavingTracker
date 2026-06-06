@@ -287,7 +287,7 @@
 
                 // Redirect after a short delay
                 await Task.Delay(2000);
-                NavManager.NavigateTo("/members");
+                NavManager.NavigateTo("/users");
             }
             else
             {
@@ -307,6 +307,6 @@
 
     private void OnCancel()
     {
-        NavManager.NavigateTo("/members");
+        NavManager.NavigateTo("/users");
     }
 }

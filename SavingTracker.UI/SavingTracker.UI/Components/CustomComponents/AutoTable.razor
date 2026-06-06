@@ -43,13 +43,20 @@ else
             <MudGrid>
                 <MudItem xs="12" sm="9">
                         <AuthorizeView Roles="Admin">
-                        @if (ShouldShowAction(FormModeEnum.Create))
+                        @if (ToolBarContentActions != null)
                         {
-                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add">Add</MudButton>
+                            @ToolBarContentActions
                         }
-                        @if (ShouldShowAction(FormModeEnum.BulkCreate))
+                        else
                         {
-                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="BulkAdd">Bulk Add</MudButton>
+                            @if (ShouldShowAction(FormModeEnum.Create))
+                            {
+                                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add">Add</MudButton>
+                            }
+                            @if (ShouldShowAction(FormModeEnum.BulkCreate))
+                            {
+                                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="BulkAdd">Bulk Add</MudButton>
+                            }
                         }
                     </AuthorizeView>
 
@@ -124,6 +131,12 @@ else
     [Parameter] 
     public EventCallback<ActionModel<TItem>> OnAction { get; set; }
 
+    [Parameter]
+    public RenderFragment ToolBarContentActions { get; set; }
+
+    [Parameter]
+    public List<RenderFragment<TItem>> CrudColumn { get; set; }
+
 
     private bool IsLoading { get; set; } = true;
 
@@ -131,7 +144,6 @@ else
 
     private List<PropertyInfo> SearchableProps = new();
     private List<ColumnDefinition> VisibleColumns = new();
-    private List<RenderFragment<TItem>> CrudColumn { get; set; } = default!;
     private bool IsAdmin { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
@@ -160,7 +172,7 @@ else
             .Select(c => c.PropertyInfo)
             .ToList();
 
-        
+
         if (ShowAllActionsExceptBulk)
         {
             ActionVisibilities.Clear();
@@ -180,7 +192,10 @@ else
             ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.BulkCreate, IsVisible = true });
         }
 
-        AddCrudColumnButtons();
+        if (CrudColumn == null)
+        {
+            AddCrudColumnButtons();
+        }
         IsLoading = false;
 
     }
