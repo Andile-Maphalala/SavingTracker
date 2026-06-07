@@ -3,6 +3,6 @@
     public class UserSavingsPlanModel
     {
         public string UserId { get; set; }
-        public List<int> SavingsPlanIds { get; set; } = new List<int>();
+        public IEnumerable<int> SavingsPlanIds { get; set; } = new List<int>();
     }
 }

@@ -12,45 +12,6 @@ namespace SavingTracker.UI.Services
     {
 
         /// <summary>
-        /// Authenticates a user by calling the API login endpoint.
-        /// </summary>
-        /// <param name="username">The username to authenticate.</param>
-        /// <param name="password">The password to authenticate.</param>
-        /// <returns>True if authentication was successful, false otherwise.</returns>
-        public async Task<(bool Success, UserInfoModel? User)> LoginAsync(string username, string password, CancellationToken cancellationToken)
-        {
-            try
-            {
-                var loginRequest = new LoginRequestDto { Username = username, Password = password, RememberMe = true };
-
-                var response = await apiClient.ApiAuthLoginAsync(loginRequest, cancellationToken);
-
-                if (response.Success)
-                {
-                    logger.LogInformation("User {Username} logged in successfully via API.", username);
-                    var result = new UserInfoModel
-                    {
-                        Id = response.User.Id,
-                        Username = response.User.Username,
-                        Email = response.User.Email,
-                        FirstName = response.User.FirstName,
-                        LastName = response.User.LastName,
-                        Roles = response.User.Roles.ToList() ?? new List<string>()
-                    };
-                    return (true, result);
-                }
-
-                logger.LogWarning("Login failed for user: {Username}", username);
-                return (false, null);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "An error occurred during login for user: {Username}", username);
-                return (false, null);
-            }
-        }
-
-        /// <summary>
         /// Logs out the current user by calling the API logout endpoint.
         /// </summary>
         public async Task LogoutAsync(CancellationToken cancellationToken)
@@ -117,36 +78,6 @@ namespace SavingTracker.UI.Services
             {
                 logger.LogError(ex, "An error occurred during registration for user: {Username}", username);
                 return (false, "An error occurred during registration.");
-            }
-        }
-
-
-        public async Task<(bool Success, UserInfoModel? User)> GetCurrentUserAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                var response = await apiClient.ApiAuthMeAsync(cancellationToken);
-
-                if (response is not null)
-                {
-                    var result = new UserInfoModel
-                    {
-                        Id = response.Id,
-                        Username = response.Username,
-                        Email = response.Email,
-                        FirstName = response.FirstName,
-                        LastName = response.LastName,
-                        Roles = response.Roles.ToList() ?? new List<string>()
-                    };
-                    return (true, result);
-                }
-
-                return (false, null);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "An error occurred while getting current user.");
-                return (false, null);
             }
         }
     }

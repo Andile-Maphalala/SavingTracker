@@ -19,6 +19,10 @@
         {
             <MudButton OnClick="Submit" Variant="Variant.Filled" Color="@ButtonColor">@ButtonDescription</MudButton>
         }
+        else if (FormMode == FormModeEnum.View && ShowEditButton)
+        {
+            <MudButton OnClick="Edit" Variant="Variant.Filled" Color="Color.Primary">Edit</MudButton>
+        }
     </MudCardActions>
 </MudCard>
 
@@ -39,7 +43,13 @@
     public EventCallback OnCancel { get; set; }
 
     [Parameter]
-    public FormModeEnum FormMode { get; set; } 
+    public EventCallback OnEdit { get; set; }
+
+    [Parameter]
+    public FormModeEnum FormMode { get; set; }
+
+    [Parameter]
+    public bool ShowEditButton { get; set; } = false;
 
     private MudForm? Form { get; set; }
 
@@ -47,10 +57,7 @@
     private Color ButtonColor { get; set; } = Color.Primary;
     protected override void OnInitialized()
     {
-        if (FormMode == FormModeEnum.View)
-        {
-            DisableInputs = true;
-        }
+        ValidateFormMode();
 
         switch (FormMode)
         {
@@ -63,6 +70,11 @@
                 DisableInputs = true;
                 break;
         }
+    }
+
+    protected override void OnParametersSet()
+    {
+        ValidateFormMode();
     }
 
     private async Task Submit()
@@ -80,6 +92,24 @@
     private async Task Cancel()
     {
         await OnCancel.InvokeAsync();
+    }
+
+    private async Task Edit()
+    {
+        await OnEdit.InvokeAsync();
+        ValidateFormMode();
+    }
+
+    private void ValidateFormMode()
+    {
+        if (FormMode == FormModeEnum.View)
+        {
+            DisableInputs = true;
+        }
+        else
+        {
+            DisableInputs = false;
+        }
     }
 
 }

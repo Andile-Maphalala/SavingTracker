@@ -1,5 +1,45 @@
 ﻿@using SavingTracker.UI.Models.CRUDs
-<h3>UserSavingPlanModal</h3>
+@using SavingTracker.UI.Models.Enums
+@using SavingTraker.App.Interfaces
+@inject IUserSavingsPlanService service;
+@inject ISavingsPlanService savingPlanService
+
+
+<AutoForm TModel="UserDetailsModel" Model="Model" FormMode="FormModeEnum.Update" OnSubmit="Submit" OnCancel="Cancel">
+
+    <MudGrid>
+
+        <MudItem xs="12" sm="12">
+            <MudTextField @bind-Value="Model.FirstName" Label="First Name" For="@(() => Model.FirstName)" Variant="Variant.Outlined" Disabled="true"/>
+            <MudTextField @bind-Value="Model.LastName" Label="Last Name" For="@(() => Model.LastName)" Variant="Variant.Outlined" Disabled="true" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudCheckBox @bind-Value="Model.IsActive" Label="Is Active" For="@(() => Model.IsActive)" Disabled="true" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudItem xs="12" sm="12">
+                <MudTextField @bind-Value="Model.UserName" Label="User Name" For="@(() => Model.UserName)" Variant="Variant.Outlined" Disabled="true" />
+            </MudItem>
+        </MudItem>
+            <MudItem xs="12" sm="12">
+            <MudSelect T="int"
+                       @bind-Value="selectedPlanId"
+                       @bind-SelectedValues="@userSavingsPlanModel.SavingsPlanIds"
+                       ToStringFunc="@(id => savingsPlanModels.FirstOrDefault(x => x.Id == id)?.Name ?? string.Empty)"
+                       Label="Role"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Normal"
+                       FullWidth="true"
+                       MultiSelection="true">
+                @foreach (var item in savingsPlanModels)
+                {
+                    <MudSelectItem T="int" Value="@item.Id">@item.Name</MudSelectItem>
+                }
+            </MudSelect>
+            </MudItem>
+        }
+    </MudGrid>
+</AutoForm>
 
 @code {
     [CascadingParameter]
@@ -7,4 +47,55 @@
 
     [Parameter]
     public UserDetailsModel Model { get; set; } = new UserDetailsModel();
+
+    private UserSavingsPlanModel userSavingsPlanModel = new UserSavingsPlanModel();
+    private List<SavingsPlanModel> savingsPlanModels = new List<SavingsPlanModel>();
+    private List<int> currentSelected = new List<int>();
+    private int selectedPlanId;
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        userSavingsPlanModel.UserId = Model.Id;
+
+        userSavingsPlanModel.SavingsPlanIds = currentSelected;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            savingsPlanModels = await savingPlanService.GetAll(appCancellation.Token);
+            var result = await service.GetAllUserSavingsPlansAsync(Model.Id, appCancellation.Token);
+            userSavingsPlanModel.SavingsPlanIds = result.Select(x => x.Id).ToList();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+
+    private async Task Submit()
+    {
+        try
+        {
+            await service.SaveUserSavingPlanAsync(userSavingsPlanModel, appCancellation.Token);
+        }
+        catch (Exception ex)
+        {
+        }
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    public Func<int, (int value, string text)> ToString => (int value) => (value, $"User Savings Plan for {Model.UserName}");
+
+    private string GetMultiSelectionText(IReadOnlyList<int> selectedValues)
+    {
+        var selectedNames = savingsPlanModels.Where(x => selectedValues.Contains(x.Id)).Select(x => x.Name).ToList();
+         return $"Selected state{(selectedValues.Count > 5 ? "s" : "")}: {string.Join(", ", selectedNames)}";
+
+    }
 }

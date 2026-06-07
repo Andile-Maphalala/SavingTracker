@@ -74,7 +74,7 @@ namespace SavingTraker.App.Services
             var result = await userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
-                throw new Exception(result.Errors.ToString());
+                throw new Exception(result.Errors.Select(e => e.Description).Aggregate((a, b) => a + ", " + b));
             }
 
         }
@@ -94,7 +94,8 @@ namespace SavingTraker.App.Services
             var result = await userManager.ChangePasswordAsync(user, userPassword.OldPassword, userPassword.NewPassword);
             if (!result.Succeeded)
             {
-                throw new Exception(result.Errors.ToString());
+                var errors = result.Errors.Select(e => e.Description).Aggregate((a, b) => a + ", " + b);
+                throw new Exception(errors);
             }
         }
 
@@ -113,7 +114,7 @@ namespace SavingTraker.App.Services
                     var result = await userManager.RemoveFromRoleAsync(user, r);
                     if (!result.Succeeded)
                     {
-                        throw new Exception(result.Errors.ToString());
+                        throw new Exception(result.Errors.Select(e => e.Description).Aggregate((a, b) => a + ", " + b));
                     }
                 }
             }

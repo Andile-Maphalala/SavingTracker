@@ -25,5 +25,19 @@ namespace SavingTracker.Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet(nameof(GetAllUserSavingsPlansAsync))]
+        public async Task<ActionResult<List<SavingsPlanDto>>> GetAllUserSavingsPlansAsync(string Id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await service.GetAllUserSavingsPlansAsync(Id, cancellationToken);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

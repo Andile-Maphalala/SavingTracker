@@ -10,6 +10,29 @@ namespace SavingTraker.App.Services
 {
     public class UserSavingPlanService(IUserInfo userInfo, AppDbContext db) : IUserSavingPlanService
     {
+        public async Task<List<SavingsPlanDto>> GetAllUserSavingsPlansAsync(string userId, CancellationToken cancellationToken)
+        {
+            if (!userInfo.IsAdmin())
+            {
+                throw new Exception("Access denied. Tried to perform unauthorized action.");
+            }
+
+            var result =  await db.UserSavingsPlans
+                .Where(usp => usp.UserId == userId)
+                .Include(usp => usp.SavingsPlan)
+                .Select(usp => new SavingsPlanDto
+                {
+                    Id = usp.SavingsPlan.Id,
+                    Name = usp.SavingsPlan.Name,
+                    TargetAmount = usp.SavingsPlan.TargetAmount,
+                    StartDate = usp.SavingsPlan.StartDate,
+                    EndDate = usp.SavingsPlan.EndDate
+                })
+                .ToListAsync(cancellationToken);
+
+            return result;
+        }
+
         public async Task SaveUserSavingPlanAsync(UserSavingsPlanDto userSavingsPlan, CancellationToken cancellationToken)
         {
             if (!userInfo.IsAdmin())

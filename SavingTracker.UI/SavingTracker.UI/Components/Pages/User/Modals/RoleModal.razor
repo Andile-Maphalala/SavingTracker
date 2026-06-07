@@ -1,5 +1,33 @@
 ﻿@using SavingTracker.UI.Models.CRUDs
-<h3>UserRoleModal</h3>
+@using SavingTracker.UI.Models.Enums
+
+@inject IUserService service
+
+<AutoForm TModel="UserDetailsModel" Model="Model" FormMode="FormModeEnum.Update" OnSubmit="Submit" OnCancel="Cancel">
+    <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Error" OnClick="@(AddRow)">
+        Add
+    </MudButton>
+    <MudGrid>
+  
+        @foreach (var item in selectedRoles)
+        {
+            <MudItem xs="10" sm="10">
+                <MudSelect @bind-Value="item.Role"
+                           Label="Role"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Normal"
+                           FullWidth="true">
+                    <MudSelectItem Value="@("Admin")">Admin</MudSelectItem>
+                    <MudSelectItem Value="@("Member")">Member</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="2" sm="2" Class="d-flex align-center justify-center">
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveRow(item))" />
+            </MudItem>
+        }
+    </MudGrid>
+</AutoForm>
 
 @code {
     [CascadingParameter]
@@ -7,4 +35,53 @@
 
     [Parameter]
     public UserDetailsModel Model { get; set; } = new UserDetailsModel();
+
+    // Use a List so we can bind to indexed elements
+    private List<RoleDetailsModel> selectedRoles = new List<RoleDetailsModel>();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (Model.Role != null)
+        {
+            selectedRoles = Model.Role.Select(r => new RoleDetailsModel(r,false)).ToList();
+        }
+        else
+        {
+            selectedRoles = new List<RoleDetailsModel>();
+        }
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            Model.Role = selectedRoles.Where(r => !string.IsNullOrWhiteSpace(r.Role)).Select(r => r.Role).ToList();
+            UserRoleModel userRoleModel = new UserRoleModel
+            {
+                Id = Model.Id,
+                Roles = Model.Role
+            };
+            await service.UpdateUserRole(userRoleModel, appCancellation.Token);
+        }
+        catch (Exception ex)
+        {
+        }
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void RemoveRow(RoleDetailsModel item)
+    {
+        selectedRoles.Remove(item);
+    }
+
+    private void AddRow()
+    {
+        selectedRoles.Add(new RoleDetailsModel(string.Empty));
+    }
 }

@@ -136,7 +136,9 @@
 
     private async Task UpdateUserPassword(UserDetailsModel user)
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+        // var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+
 
         var parameters = new DialogParameters<PasswordModal>
         {
