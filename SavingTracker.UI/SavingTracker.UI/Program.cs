@@ -1,4 +1,5 @@
 
+using Microsoft.AspNetCore.DataProtection;
 using SavingTracker.UI;
 using SavingTracker.UI.Components;
 
@@ -26,7 +27,12 @@ builder.Services.AddApplicationServices();
 
 // Utility services
 builder.Services.AddUtilityServices();
+var keyPath = builder.Configuration["DataProtection:KeyPath"]
+              ?? Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
 
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
+    .SetApplicationName("SavingTracker");
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

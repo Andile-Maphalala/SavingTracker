@@ -26,7 +26,8 @@ namespace SavingTracker.Api.Controllers
         [HttpPost("login")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto request)
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<ActionResult<AuthResponseDto>> Login([FromForm] LoginRequestDto request)
         {
             if (!ModelState.IsValid)
             {
@@ -66,7 +67,7 @@ namespace SavingTracker.Api.Controllers
                 if (user == null || !user.IsActive)
                 {
                     logger.LogWarning("Login attempt for invalid or inactive user: {Username}", request.Username);
-                    return BadRequest(new AuthResponseDto 
+                    return Unauthorized(new AuthResponseDto 
                     { 
                         Success = false, 
                         Message = "Invalid username or password." 
@@ -101,14 +102,16 @@ namespace SavingTracker.Api.Controllers
                 if (result.IsLockedOut)
                 {
                     logger.LogWarning("User {RequestUsername} account is locked.", request.Username);
-                    return BadRequest(new AuthResponseDto 
+                    var error = new ObjectResult(new AuthResponseDto 
                     { 
                         Success = false, 
                         Message = "Account is locked due to too many failed login attempts." 
                     });
+
+                    error.StatusCode = StatusCodes.Status423Locked;
                 }
 
-                return BadRequest(new AuthResponseDto 
+                return Unauthorized(new AuthResponseDto 
                 { 
                     Success = false, 
                     Message = "Invalid username or password." 

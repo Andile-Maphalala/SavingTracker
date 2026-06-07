@@ -1,5 +1,6 @@
 ﻿using Mapster;
 using MapsterMapper;
+using Microsoft.AspNetCore.Identity;
 using MudBlazor.Services;
 using SavingTracker.ApiClient;
 using SavingTracker.UI.Services;
@@ -116,25 +117,24 @@ namespace SavingTracker.UI
         /// </summary>
         public static IServiceCollection AddAuthenticationServices(this IServiceCollection services)
         {
-            services.AddAuthentication("BlazorCookies")
-                .AddCookie("BlazorCookies", options =>
-                {
-                    options.LoginPath = "/login";
-                    options.AccessDeniedPath = "/access-denied";
-                    options.ExpireTimeSpan = TimeSpan.FromDays(7);
-                    options.SlidingExpiration = true;
-                    options.Events.OnRedirectToLogin = context =>
-                    {
-                        // Return 401 for API calls instead of redirecting
-                        if (context.Request.Path.StartsWithSegments("/api"))
-                        {
-                            context.Response.StatusCode = 401;
-                            return Task.CompletedTask;
-                        }
-                        context.Response.Redirect(context.RedirectUri);
-                        return Task.CompletedTask;
-                    };
-                });
+            services.AddAuthentication(IdentityConstants.ApplicationScheme)
+               .AddCookie(IdentityConstants.ApplicationScheme, options =>
+               {
+                   options.LoginPath = "/login";
+                   options.AccessDeniedPath = "/access-denied";
+                   options.ExpireTimeSpan = TimeSpan.FromDays(7);
+                   options.SlidingExpiration = true;
+                   options.Events.OnRedirectToLogin = context =>
+                   {
+                       if (context.Request.Path.StartsWithSegments("/api"))
+                       {
+                           context.Response.StatusCode = 401;
+                           return Task.CompletedTask;
+                       }
+                       context.Response.Redirect(context.RedirectUri);
+                       return Task.CompletedTask;
+                   };
+               });
 
             services.AddAuthorization();
             services.AddCascadingAuthenticationState();

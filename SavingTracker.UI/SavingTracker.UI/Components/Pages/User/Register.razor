@@ -78,7 +78,6 @@
                     <MudTextField 
                         @bind-Value="Password" 
                         Label="Password" 
-                        InputType="InputType.Password"
                         Variant="Variant.Outlined"
                         Margin="Margin.Normal"
                         FullWidth="true"
@@ -86,20 +85,29 @@
                         HelperText="@(Password.Length > 0 && Password.Length < MinPasswordLength ? $"Minimum {MinPasswordLength} characters" : "")"
                         HelperTextOnFocus="true"
                         Error="@(!string.IsNullOrEmpty(GetPasswordError()))"
-                        ErrorText="@GetPasswordError()" />
+                        ErrorText="@GetPasswordError()" 
+                        InputType="@PasswordInput"
+                        Adornment="Adornment.End"
+                        AdornmentIcon="@PasswordInputIcon"
+                        OnAdornmentClick="TogglePasswordVisibility"
+                        AdornmentAriaLabel="Show Password" />
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
                     <MudTextField 
                         @bind-Value="ConfirmPassword" 
                         Label="Confirm Password" 
-                        InputType="InputType.Password"
                         Variant="Variant.Outlined"
                         Margin="Margin.Normal"
                         FullWidth="true"
                         Disabled="IsLoading"
                         Error="@(!string.IsNullOrEmpty(GetConfirmPasswordError()))"
-                        ErrorText="@GetConfirmPasswordError()" />
+                        ErrorText="@GetConfirmPasswordError()" 
+                        InputType="@PasswordInput"
+                        Adornment="Adornment.End"
+                        AdornmentIcon="@PasswordInputIcon"
+                        OnAdornmentClick="TogglePasswordVisibility"
+                        AdornmentAriaLabel="Show Password" />
                 </MudItem>
 
                 <MudItem xs="12">
@@ -177,6 +185,9 @@
     private string ErrorMessage = "";
     private string SuccessMessage = "";
     private bool IsLoading = false;
+    bool isShow;
+    InputType PasswordInput = InputType.Password;
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
 
     private string GetFirstNameError()
     {
@@ -308,5 +319,21 @@
     private void OnCancel()
     {
         NavManager.NavigateTo("/users");
+    }
+
+    void TogglePasswordVisibility()
+    {
+        @if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
     }
 }

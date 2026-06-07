@@ -13,6 +13,8 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - savingtracker-net
 
   savingtracker.api:
     build:
@@ -23,10 +25,16 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${API_ENVIRONMENT}
       ConnectionStrings__ConnectionString: ${API_CONNECTION_STRING}
+      DataProtection__KeyPath: "/app/DataProtection-Keys"
+      AllowedOrigins: ${ALLOWED_ORIGINS}
     ports:
       - "8080:8080"
     depends_on:
       - postgres
+    networks:
+      - savingtracker-net
+    volumes:
+     - dataprotection-keys:/app/DataProtection-Keys
 
   savingtracker.ui:
     build:
@@ -36,11 +44,22 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: ${BLAZOR_ENVIRONMENT}
-      ApiBaseUrl: ${BLAZOR_API_BASE_URL}
-      ASPNETCORE_URLS: "http://+:5000"
+      ApiBaseUrl: http://savingtracker.api:8080
+      ASPNETCORE_URLS: "http://+:3000"
+      DataProtection__KeyPath: "/app/DataProtection-Keys"
     ports:
-      - "5000:5000"
+      - "3000:3000"
     depends_on:
       - savingtracker.api
+    networks:
+      - savingtracker-net
+    volumes:
+      - dataprotection-keys:/app/DataProtection-Keys
+
 volumes:
   pgdata:
+  dataprotection-keys:
+
+networks:
+  savingtracker-net:
+    driver: bridge

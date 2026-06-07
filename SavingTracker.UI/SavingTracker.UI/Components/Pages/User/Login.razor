@@ -38,7 +38,6 @@
             <MudTextField 
                 @bind-Value="Password" 
                 Label="Password" 
-                InputType="InputType.Password"
                 Variant="Variant.Outlined"
                 Margin="Margin.Normal"
                 FullWidth="true"
@@ -46,13 +45,16 @@
                 HelperText="@(Password.Length > 0 && Password.Length < MinPasswordLength ? $"Minimum {MinPasswordLength} characters" : "")"
                 HelperTextOnFocus="true"
                 Error="@(!string.IsNullOrEmpty(GetPasswordError()))"
-                ErrorText="@GetPasswordError()" />
+                ErrorText="@GetPasswordError()"
+                InputType="@PasswordInput" 
+                Adornment="Adornment.End" 
+                AdornmentIcon="@PasswordInputIcon" 
+                OnAdornmentClick="TogglePasswordVisibility" 
+                AdornmentAriaLabel="Show Password" />
 
-            @if (!string.IsNullOrEmpty(ErrorMessage))
+            @if (ErrorMessage is not null)
             {
-                <MudAlert Severity="Severity.Error" Class="mt-4" Variant="Variant.Filled">
-                    @ErrorMessage
-                </MudAlert>
+                <MudAlert Severity="Severity.Error" Class="mb-4">@ErrorMessage</MudAlert>
             }
 
             <MudButton 
@@ -78,13 +80,64 @@
 </MudContainer>
 
 @code {
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    private string? ErrorMessage { get; set; }
+
+
     private const int MinUsernameLength = 3;
     private const int MinPasswordLength = 6;
 
     private string Username = "";
     private string Password = "";
-    private string ErrorMessage = "";
+
     private bool IsLoading = false;
+
+    bool isShow;
+    InputType PasswordInput = InputType.Password;
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+
+    protected override void OnInitialized()
+    {
+        switch(Error)
+        {
+            case "invalid_credentials":
+                ErrorMessage = "Invalid username or password.";
+                break;
+            case "too_many_attempts":
+                ErrorMessage = "Too many failed attempts. Please try again later.";
+                break;
+            case "server_error":
+                ErrorMessage = "Something went wrong. Please try again.";
+                break;
+            case "locked":
+                ErrorMessage = "Your account has been locked due to too many failed attempts.";
+                break;
+            default:
+                ErrorMessage = "Something went wrong. Please try again.";
+                break;
+        }
+    }
+
+
+    void TogglePasswordVisibility()
+    {
+        @if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
 
     private string GetUsernameError()
     {
