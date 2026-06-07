@@ -1,0 +1,74 @@
+﻿@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Models.Enums
+
+@inject IUserService service
+
+
+<AutoForm TModel="UserDetailsModel" Model="Model" FormMode="FormMode" OnSubmit="Submit" OnCancel="Cancel" ShowEditButton="true" OnEdit="Edit">
+    <MudGrid>
+        <MudItem xs="12" sm="12">
+            <MudTextField @bind-Value="Model.FirstName" Label="First Name" For="@(() => Model.FirstName)" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Model.LastName" Label="Last Name" For="@(() => Model.LastName)" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudCheckBox @bind-Value="Model.IsActive" Label="Is Active" For="@(() => Model.IsActive)" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudItem xs="12" sm="12">
+                <MudTextField @bind-Value="Model.UserName" Label="User Name" For="@(() => Model.UserName)" Variant="Variant.Outlined" Disabled="true" />
+            </MudItem>
+        </MudItem>
+        <MudItem xs="12" sm="12">
+            <MudTextField @bind-Value="Model.CreatedAt" Label="Created At" For="@(() => Model.CreatedAt)" Variant="Variant.Outlined" Disabled="true" />
+            <MudTextField @bind-Value="Model.LastModifiedAt" Label="Last Modified At" For="@(() => Model.LastModifiedAt)" Variant="Variant.Outlined" Disabled="true" />
+        </MudItem>
+        <MudItem xs="12" sm="12">
+            <MudPaper Width="100%">
+                <MudList T="string" ReadOnly="true" Dense="false" Gutters="true" Disabled="true" Padding="false">
+                    <MudListSubheader>User Roles</MudListSubheader>
+                    @foreach (var role in Model.Role)
+                    {
+                        <MudListItem Text="@role" Icon="@Icons.Material.Filled.Person" IconColor="Color.Primary" />
+                    }
+                </MudList>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</AutoForm>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public UserDetailsModel Model { get; set; } = new UserDetailsModel();
+
+    [Parameter]
+    public FormModeEnum FormMode { get; set; } = FormModeEnum.View;
+
+
+    private async Task Submit()
+    {
+        try
+        {
+            await service.UpdateUserDetails(Model, appCancellation.Token);
+        }
+        catch (Exception ex)
+        {
+            
+        }
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Edit()
+    {
+        FormMode = FormModeEnum.Update;
+        StateHasChanged();
+    }
+
+}

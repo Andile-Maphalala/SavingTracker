@@ -1,44 +1,66 @@
-name: savingtracker 
+name: savingtracker
+
 services:
   postgres:
     image: postgres:17
     container_name: postgres-db
     restart: always
     environment:
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev123
-      POSTGRES_DB: SavingTrackerDatabase
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - savingtracker-net
 
-  api:
+  savingtracker.api:
     build:
       context: .
       dockerfile: SavingTracker.API/Dockerfile
     container_name: savingtracker-api
+    restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__ConnectionString: "Host=postgres;Port=5432;Database=SavingTrackerDatabase;Username=dev;Password=dev123;SSL Mode=Disable"
+      ASPNETCORE_ENVIRONMENT: ${API_ENVIRONMENT}
+      ConnectionStrings__ConnectionString: ${API_CONNECTION_STRING}
+      DataProtection__KeyPath: "/app/DataProtection-Keys"
+      AllowedOrigins: ${ALLOWED_ORIGINS}
+      ASPNETCORE_URLS: http://+:8081
     ports:
-      - "8080:8080"
+      - "8081:8081"
     depends_on:
       - postgres
+    networks:
+      - savingtracker-net
+    volumes:
+     - dataprotection-keys:/app/DataProtection-Keys
 
-  blazor:
+  savingtracker.ui:
     build:
       context: .
       dockerfile: SavingTracker.UI/SavingTracker.UI/Dockerfile
     container_name: savingtracker-blazor
+    restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: "Development"
-      ApiBaseUrl: "http://api:8080"
-      ASPNETCORE_URLS: "http://+:5000"
+      ASPNETCORE_ENVIRONMENT: ${BLAZOR_ENVIRONMENT}
+      ApiBaseUrl: http://savingtracker.api:8081
+      ASPNETCORE_URLS: "http://+:3001"
+      DataProtection__KeyPath: "/app/DataProtection-Keys"
     ports:
-      - "5000:5000"
+      - "3001:3001"
     depends_on:
-      - api
+      - savingtracker.api
+    networks:
+      - savingtracker-net
+    volumes:
+      - dataprotection-keys:/app/DataProtection-Keys
 
 volumes:
   pgdata:
+  dataprotection-keys:
+
+networks:
+  savingtracker-net:
+    driver: bridge

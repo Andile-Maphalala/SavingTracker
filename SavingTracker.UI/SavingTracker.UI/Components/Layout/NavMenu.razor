@@ -1,60 +1,81 @@
-﻿@using SavingTracker.UI.Services
-@inject AuthService Auth
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject IAuthService AuthService
 @inject NavigationManager NavManager
-
-
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
 
 <div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-        @if (Auth.IsLoggedIn)
-        {
-            <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="Logout">
-                Logout (@Auth.CurrentUser)
-            </MudButton>
-        }
-        else
-        {
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Login">
-                Login
-            </MudButton>
-        }
+    <div class="container-fluid">
+        <AuthorizeView>
+            <Authorized>
+                <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="Logout">
+                    Logout (@context.User.Identity?.Name)
+                </MudButton>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Login">
+                    Login
+                </MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
     </div>
 </div>
+
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/dashboard" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Dashboard
-            </NavLink>
-            <NavLink class="nav-link" href="/savingsplans" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> SavingsPlan
-            </NavLink>
-            <NavLink class="nav-link" href="/members" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Member
-            </NavLink>
-            <NavLink class="nav-link" href="/contribution" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Contributions
-            </NavLink>
-            <NavLink class="nav-link" href="/contributiontype" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> ContributionType
-            </NavLink>
-
-
+            <AuthorizeView>
+                <NavLink class="nav-link" href="/dashboard">Dashboard</NavLink>
+                <NavLink class="nav-link" href="/contribution">Contributions</NavLink>
+                <NavLink class="nav-link" href="/contributiontype">ContributionType</NavLink>
+            </AuthorizeView>
+            <AuthorizeView Roles="Admin">
+                <NavLink class="nav-link" href="/savingsplans">SavingsPlan</NavLink>
+                <NavLink class="nav-link" href="/members">Members</NavLink>
+                <NavLink class="nav-link" href="/users">Users</NavLink>
+            </AuthorizeView>
         </div>
     </nav>
 </div>
 
 @code {
-    private void Login()
-    {
-        NavManager.NavigateTo("/login");
-    }
+    private void Login() => NavManager.NavigateTo("/login");
 
-    private void Logout()
+    private async Task Logout()
     {
-        Auth.Logout();
-        NavManager.NavigateTo("/", true);
+        await AuthService.LogoutAsync(appCancellation.Token);
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("submitLogoutForm", appCancellation.Token);
+        }
+        catch (TaskCanceledException)
+        {
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch
+        {
+            
+        }
     }
 }
+
+
+<script>
+    window.submitLogoutForm = function() {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/account/logout';
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'returnUrl';
+        input.value = '/login';
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    };
+</script>

@@ -1,11 +1,10 @@
-﻿
-
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SavingTracker.Data.Models;
 
 namespace SavingTracker.Data.Context
 {
-    public partial class AppDbContext : DbContext
+    public partial class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -15,6 +14,7 @@ namespace SavingTracker.Data.Context
         public virtual DbSet<Contribution> Contributions { get; set; }
         public virtual DbSet<ContributionType> ContributionTypes { get; set; }
         public virtual DbSet<SavingsPlan> SavingsPlans { get; set; }
+        public virtual DbSet<UserSavingsPlan> UserSavingsPlans { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,6 +24,7 @@ namespace SavingTracker.Data.Context
             modelBuilder.ApplyConfiguration(new ContributionConfiguration());
             modelBuilder.ApplyConfiguration(new ContributionTypeConfiguration());
             modelBuilder.ApplyConfiguration(new SavingsPlanConfiguration());
+            modelBuilder.ApplyConfiguration(new UserSavingsPlanConfiguration());
 
             OnModelCreatingPartial(modelBuilder);
         }

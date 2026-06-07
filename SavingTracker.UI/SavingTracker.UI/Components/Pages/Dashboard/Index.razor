@@ -1,11 +1,14 @@
-﻿@page "/dashboard";
+﻿ @page "/dashboard";
 @page "/";
+@attribute [Authorize]
+
 @using SavingTracker.UI.Models.CRUDs
 @using SavingTracker.UI.Models.Common
 @using SavingTracker.UI.Models.Enums
 @using SavingTracker.UI.Models.Lookups
 @using SavingTracker.UI.Models.Summary
 @using SavingTraker.App.Interfaces
+@using Microsoft.AspNetCore.Authorization
 
 @inject IDashboardService service;
 @inject IDialogService dialogService
@@ -45,7 +48,7 @@
                 <TotalNumber Total="Data.TotalPeriods" Description="Total Periods" ComponentColor="@Colors.Cyan.Default"  Icon="@Icons.Material.Filled.CalendarMonth"/>
             </MudItem>
             <MudItem xs="12" sm="12" md="12">
-                <AutoTable @ref="tableRef" TItem="MemberDashboardSummaryModel" OnAction="Actions" LoadData="LoadData" ShowAllActionsExceptBulk="false" ActionVisibilities="ActionVisibilities" IsAdmin="authService.IsLoggedIn"/>
+                <AutoTable @ref="tableRef" TItem="MemberDashboardSummaryModel" OnAction="Actions" LoadData="LoadData" ShowAllActionsExceptBulk="false" ActionVisibilities="ActionVisibilities"/>
             </MudItem>
         }
 
@@ -83,6 +86,7 @@
         PeriodDescription = $"{FrequenyName} Inome";
 
         await LoadDropdownData();
+        SelectedPlanId = SavingPlanList.FirstOrDefault()?.Id ?? 0;
         await InvokeAsync(StateHasChanged);
 
     }
@@ -92,7 +96,7 @@
     {
         if (firstRender)
         {
-
+            await RefreshDashboard();
         }
     }
     private async Task Actions(ActionModel<MemberDashboardSummaryModel> item)
@@ -133,7 +137,7 @@
     private async Task LoadDropdownData()
     {
         var saving = await savingPlanService.GetAll(appCancellation.Token);
-        SavingPlanList = saving.Select(x => new LookUpModel { Id = x.Id, Name = x.Name }).ToList();
+        SavingPlanList = saving.Select(x => new LookUpModel { Id = x.Id, Name = x.Name }).ToList();        
         Frequencies = contributionTypeservice.GetContributionFrequenyList();
 
     }

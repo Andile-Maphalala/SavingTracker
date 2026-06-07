@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <OpenApiReference Include="SwaggerGen\swagger.json" Namespace="SavingTracker.ApiClient" Options="/operationGenerationMode:SingleClientFromPathSegments /useBaseUrl:false /dateType:DateTime /dateTimeType:DateTime /excludedTypeNames:ValidationResult,DataTypeEnum,TimeSpan" ClassName="SavingTrackerApiClient" />
+    <OpenApiReference Include="SwaggerGen\swagger.json" ClassName="SavingTrackerApiClient" Namespace="SavingTracker.ApiClient" Options="/operationGenerationMode:SingleClientFromPathSegments /useBaseUrl:false /dateType:DateTime /dateTimeType:DateTime /excludedTypeNames:ValidationResult,DataTypeEnum,TimeSpan" />
   </ItemGroup>
 
 </Project>

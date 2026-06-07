@@ -10,7 +10,7 @@ namespace SavingTracker.Data.Models
         public decimal TargetAmount { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
-
         public virtual ICollection<Member> Members { get; set; }
+        public virtual ICollection<UserSavingsPlan> UserSavingsPlans { get; set; }
     }
 }

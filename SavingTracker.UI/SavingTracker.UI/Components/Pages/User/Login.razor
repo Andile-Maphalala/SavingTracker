@@ -1,0 +1,220 @@
+﻿@page "/login"
+@attribute [AllowAnonymous]
+@inject NavigationManager NavManager
+@inject IAuthService Auth
+@inject AuthenticationStateProvider AuthStateProvider
+@inject HttpClient Http
+@layout EmptyLayout
+@inject IJSRuntime JSRuntime
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@using SavingTracker.UI.Components.Layout
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="py-8">
+    <MudPaper Class="pa-6" Elevation="3">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+            Saving Tracker
+        </MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6">
+            Family Savings Management
+        </MudText>
+
+        <EditForm Model="this" OnValidSubmit="OnLogin">
+            <DataAnnotationsValidator />
+
+            <MudTextField 
+                @bind-Value="Username" 
+                Label="Username" 
+                Variant="Variant.Outlined"
+                Margin="Margin.Normal"
+                FullWidth="true"
+                Disabled="IsLoading"
+                HelperText="@(Username.Length > 0 && Username.Length < MinUsernameLength ? $"Minimum {MinUsernameLength} characters" : "")"
+                HelperTextOnFocus="true"
+                Error="@(!string.IsNullOrEmpty(GetUsernameError()))"
+                ErrorText="@GetUsernameError()" />
+
+            <MudTextField 
+                @bind-Value="Password" 
+                Label="Password" 
+                Variant="Variant.Outlined"
+                Margin="Margin.Normal"
+                FullWidth="true"
+                Disabled="IsLoading"
+                HelperText="@(Password.Length > 0 && Password.Length < MinPasswordLength ? $"Minimum {MinPasswordLength} characters" : "")"
+                HelperTextOnFocus="true"
+                Error="@(!string.IsNullOrEmpty(GetPasswordError()))"
+                ErrorText="@GetPasswordError()"
+                InputType="@PasswordInput" 
+                Adornment="Adornment.End" 
+                AdornmentIcon="@PasswordInputIcon" 
+                OnAdornmentClick="TogglePasswordVisibility" 
+                AdornmentAriaLabel="Show Password" />
+
+            @if (ErrorMessage is not null)
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4">@ErrorMessage</MudAlert>
+            }
+
+            <MudButton 
+                ButtonType="ButtonType.Submit" 
+                Variant="Variant.Filled" 
+                Color="Color.Primary" 
+                Size="Size.Large"
+                FullWidth="true"
+                Class="mt-6"
+                Disabled="IsLoading || !IsFormValid()">
+                @if (IsLoading)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Logging in...</MudText>
+                }
+                else
+                {
+                    <MudText>Login</MudText>
+                }
+            </MudButton>
+        </EditForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    private string? ErrorMessage { get; set; }
+
+
+    private const int MinUsernameLength = 3;
+    private const int MinPasswordLength = 6;
+
+    private string Username = "";
+    private string Password = "";
+
+    private bool IsLoading = false;
+
+    bool isShow;
+    InputType PasswordInput = InputType.Password;
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+
+    protected override void OnInitialized()
+    {
+        switch(Error)
+        {
+            case "invalid_credentials":
+                ErrorMessage = "Invalid username or password.";
+                break;
+            case "too_many_attempts":
+                ErrorMessage = "Too many failed attempts. Please try again later.";
+                break;
+            case "server_error":
+                ErrorMessage = "Something went wrong. Please try again.";
+                break;
+            case "locked":
+                ErrorMessage = "Your account has been locked due to too many failed attempts.";
+                break;
+        }
+    }
+
+
+    void TogglePasswordVisibility()
+    {
+        @if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
+
+    private string GetUsernameError()
+    {
+        if (string.IsNullOrWhiteSpace(Username))
+            return "Username is required.";
+
+        if (Username.Length < MinUsernameLength)
+            return $"Username must be at least {MinUsernameLength} characters.";
+
+        return "";
+    }
+
+    private string GetPasswordError()
+    {
+        if (string.IsNullOrWhiteSpace(Password))
+            return "Password is required.";
+
+        if (Password.Length < MinPasswordLength)
+            return $"Password must be at least {MinPasswordLength} characters.";
+
+        return "";
+    }
+
+    private bool IsFormValid()
+    {
+        return string.IsNullOrEmpty(GetUsernameError()) && 
+               string.IsNullOrEmpty(GetPasswordError());
+    }
+
+    private async Task OnLogin()
+    {
+        ErrorMessage = "";
+        IsLoading = true;
+
+        try
+        {
+            if (!IsFormValid())
+            {
+                ErrorMessage = GetUsernameError() ?? GetPasswordError() ?? "Invalid input.";
+                IsLoading = false;
+                return;
+            }
+
+            var returnUrl = "/";
+
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("submitLoginForm", appCancellation.Token, Username, Password, returnUrl);
+            }
+            catch (TaskCanceledException)
+            {
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "An error occurred. Please try again.";
+            Console.Error.WriteLine($"Login error: {ex.Message}");
+            IsLoading = false;
+        }
+    }
+}
+
+
+<script>
+    window.submitLoginForm = function(username, password, returnUrl) {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/account/login';
+        var fields = { username, password, returnUrl };
+        for (var key in fields) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = fields[key];
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+    };
+</script>

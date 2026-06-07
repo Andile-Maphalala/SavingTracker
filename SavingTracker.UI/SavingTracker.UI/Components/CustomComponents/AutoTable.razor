@@ -1,10 +1,12 @@
-﻿@using System.ComponentModel.DataAnnotations
-@using System.Reflection
+﻿@using System.Reflection
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 @using SavingTracker.UI.Models.Common
 @using SavingTracker.UI.Models.Enums
 @using SavingTracker.UI.Services
 @typeparam TItem
+@inject AuthenticationStateProvider AuthStateProvider
 
 @if (IsLoading)
 {
@@ -40,14 +42,25 @@ else
         <ToolBarContent>
             <MudGrid>
                 <MudItem xs="12" sm="9">
-                    @if (ShouldShowAction(FormModeEnum.Create) && IsAdmin)
-                    {
-                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add">Add</MudButton>
-                    }
-                    @if (ShouldShowAction(FormModeEnum.BulkCreate) && IsAdmin)
-                    {
-                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="BulkAdd">Bulk Add</MudButton>
-                    }
+                        <AuthorizeView Roles="Admin">
+                        @if (ToolBarContentActions != null)
+                        {
+                            @ToolBarContentActions
+                        }
+                        else
+                        {
+                            @if (ShouldShowAction(FormModeEnum.Create))
+                            {
+                                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add">Add</MudButton>
+                            }
+                            @if (ShouldShowAction(FormModeEnum.BulkCreate))
+                            {
+                                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="BulkAdd">Bulk Add</MudButton>
+                            }
+                        }
+                    </AuthorizeView>
+
+                    
                 </MudItem>
                 <MudItem xs="12" sm="3">
                     <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -119,7 +132,10 @@ else
     public EventCallback<ActionModel<TItem>> OnAction { get; set; }
 
     [Parameter]
-    public bool IsAdmin { get; set; } = false;
+    public RenderFragment ToolBarContentActions { get; set; }
+
+    [Parameter]
+    public List<RenderFragment<TItem>> CrudColumn { get; set; }
 
 
     private bool IsLoading { get; set; } = true;
@@ -128,11 +144,16 @@ else
 
     private List<PropertyInfo> SearchableProps = new();
     private List<ColumnDefinition> VisibleColumns = new();
-    private List<RenderFragment<TItem>> CrudColumn { get; set; } = default!;
-
+    private bool IsAdmin { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var roles = authState.User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value);
+        if(roles.Contains("Admin"))
+        {
+            IsAdmin = true;
+        }
 
         await RefreshTable();
         VisibleColumns = typeof(TItem)
@@ -151,7 +172,7 @@ else
             .Select(c => c.PropertyInfo)
             .ToList();
 
-        
+
         if (ShowAllActionsExceptBulk)
         {
             ActionVisibilities.Clear();
@@ -171,7 +192,10 @@ else
             ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.BulkCreate, IsVisible = true });
         }
 
-        AddCrudColumnButtons();
+        if (CrudColumn == null)
+        {
+            AddCrudColumnButtons();
+        }
         IsLoading = false;
 
     }

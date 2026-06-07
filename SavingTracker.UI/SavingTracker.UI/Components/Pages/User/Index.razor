@@ -1,0 +1,181 @@
+﻿@page "/users"
+@attribute [Authorize(Roles = "Admin")]
+
+@using Microsoft.AspNetCore.Authorization
+@using SavingTracker.UI.Models.CRUDs
+@using SavingTracker.UI.Components.Pages.User.Modals
+
+@inject IDialogService dialogService
+@inject IUserService service
+@inject NavigationManager NavManager
+
+<MudPaper Class="p-4">
+    <AutoTable @ref="tableRef" TItem="UserDetailsModel" LoadData="LoadData"  CrudColumn="CrudColumns">
+        <ToolBarContentActions>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="AddUser">Add</MudButton>
+        </ToolBarContentActions>
+        </AutoTable>
+</MudPaper>
+
+
+@code {
+    AutoTable<UserDetailsModel> tableRef;
+    private List<UserDetailsModel> Data = new List<UserDetailsModel>();
+    private List<RenderFragment<UserDetailsModel>> CrudColumns { get; set; }
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        CrudColumns = new List<RenderFragment<UserDetailsModel>>();
+        CrudColumns.Add(item => builder =>
+            {
+                builder.OpenComponent<MudButton>(0);
+                builder.AddAttribute(1, "Color", Color.Info);
+                builder.AddAttribute(2, "Variant", Variant.Filled);
+                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => UpdateUserDetails(item)));
+                builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Update);
+                builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
+                {
+                    b.AddContent(6, "View");
+                }));
+                builder.CloseComponent();
+            });
+
+        CrudColumns.Add(item => builder =>
+        {
+            builder.OpenComponent<MudButton>(0);
+            builder.AddAttribute(1, "Color", Color.Secondary);
+            builder.AddAttribute(2, "Variant", Variant.Filled);
+            builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => UpdateUserRole(item)));
+            builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.SupervisedUserCircle);
+            builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
+            {
+                b.AddContent(6, "Roles");
+            }));
+            builder.CloseComponent();
+        });
+
+        CrudColumns.Add(item => builder =>
+            {
+                builder.OpenComponent<MudButton>(0);
+                builder.AddAttribute(1, "Color", Color.Tertiary);
+                builder.AddAttribute(2, "Variant", Variant.Filled);
+                builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => UpdateUserSavingPlans(item)));
+                builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Savings);
+                builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
+                {
+                    b.AddContent(6, "Plan");
+                }));
+                builder.CloseComponent();
+            });
+
+        CrudColumns.Add(item => builder =>
+        {
+            builder.OpenComponent<MudButton>(0);
+            builder.AddAttribute(1, "Color", Color.Error);
+            builder.AddAttribute(2, "Variant", Variant.Filled);
+            builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => UpdateUserPassword(item)));
+            builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Password);
+            builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
+            {
+                b.AddContent(6, "Password");
+            }));
+            builder.CloseComponent();
+        });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+        }
+    }
+
+    private async Task AddUser()
+    {
+        NavManager.NavigateTo("/register");
+    }
+
+    private async Task UpdateUserDetails(UserDetailsModel user)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+
+        var parameters = new DialogParameters<DetailsModal>
+        {
+            { x => x.Model,  user }
+        };
+
+        var dialog = await dialogService.ShowAsync<DetailsModal>("", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await tableRef?.RefreshTable();
+        }
+    }
+
+    private async Task UpdateUserRole(UserDetailsModel user)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+
+        var parameters = new DialogParameters<RoleModal>
+        {
+            { x => x.Model,  user }
+        };
+
+        var dialog = await dialogService.ShowAsync<RoleModal>("", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await tableRef?.RefreshTable();
+        }
+    }
+
+    private async Task UpdateUserPassword(UserDetailsModel user)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+        // var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true };
+
+
+        var parameters = new DialogParameters<PasswordModal>
+        {
+            { x => x.Model,  user }
+        };
+
+        var dialog = await dialogService.ShowAsync<PasswordModal>("", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            
+        }
+    }
+
+    private async Task UpdateUserSavingPlans(UserDetailsModel user)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+
+        var parameters = new DialogParameters<UserSavingPlanModal>
+        {
+            { x => x.Model,  user }
+        };
+
+        var dialog = await dialogService.ShowAsync<UserSavingPlanModal>("", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+        }
+    }
+
+    private async Task<List<UserDetailsModel>> LoadData()
+    {
+
+        Data = await service.ListUsers(appCancellation.Token);
+        return Data;
+    }
+
+}

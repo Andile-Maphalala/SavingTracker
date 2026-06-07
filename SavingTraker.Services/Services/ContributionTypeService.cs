@@ -11,18 +11,12 @@ using SavingTraker.App.Interfaces;
 
 namespace SavingTraker.App.Services
 {
-    public class ContributionTypeService : IContributionTypeService
+    public class ContributionTypeService(IUserInfo userInfo, AppDbContext db) : IContributionTypeService
     {
-        private readonly AppDbContext _db;
-
-        public ContributionTypeService(AppDbContext db)
-        {
-            _db = db;
-        }
 
         public async Task<List<ContributionTypeDto>> GetAll(CancellationToken cancellationToken)
         {
-            return await _db.ContributionTypes
+            return await db.ContributionTypes
                 .Select(ct => new ContributionTypeDto
                 {
                     Id = ct.Id,
@@ -35,7 +29,7 @@ namespace SavingTraker.App.Services
 
         public async Task<ContributionTypeDto?> GetById(int Id, CancellationToken cancellationToken)
         {
-            var entity = await _db.ContributionTypes.FindAsync(Id, cancellationToken);
+            var entity = await db.ContributionTypes.FindAsync(Id, cancellationToken);
             if (entity == null)
             {
                 throw new NotFoundException("ContributionType", Id);
@@ -53,7 +47,11 @@ namespace SavingTraker.App.Services
 
         public async Task<int> UpSert(ContributionTypeDto dto, CancellationToken cancellationToken)
         {
-            var entity = await _db.ContributionTypes.FindAsync(dto.Id, cancellationToken);
+            if (!userInfo.IsAdmin())
+            {
+                throw new Exception("Access denied. Tried to perform unauthorized action.");
+            }
+            var entity = await db.ContributionTypes.FindAsync(dto.Id, cancellationToken);
             if (entity == null)
             {
                 entity = new ContributionType
@@ -62,7 +60,7 @@ namespace SavingTraker.App.Services
                     Amount = dto.Amount,
                     Frequency = dto.Frequency,
                 };
-                _db.ContributionTypes.Add(entity);
+                db.ContributionTypes.Add(entity);
             }
             else
             {
@@ -70,20 +68,24 @@ namespace SavingTraker.App.Services
                 entity.Amount = dto.Amount;
                 entity.Frequency = dto.Frequency;
             }
-            await _db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
             return entity.Id;
         }
 
         public async Task<int> Delete(int Id, CancellationToken cancellationToken)
         {
-            var entity = await _db.ContributionTypes.FindAsync(Id, cancellationToken);
+            if (!userInfo.IsAdmin())
+            {
+                throw new Exception("Access denied. Tried to perform unauthorized action.");
+            }
+            var entity = await db.ContributionTypes.FindAsync(Id, cancellationToken);
             if (entity == null)
             {
                 throw new NotFoundException("ContributionType", Id);
             }
 
-            _db.ContributionTypes.Remove(entity);
-            return await _db.SaveChangesAsync(cancellationToken);
+            db.ContributionTypes.Remove(entity);
+            return await db.SaveChangesAsync(cancellationToken);
 
         }
 
