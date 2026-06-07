@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SavingTraker.App.Dtos.CRUDs;
 using SavingTraker.App.Interfaces;
 
@@ -6,6 +7,7 @@ namespace SavingTracker.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ContributionController(IContributionService service) : ControllerBase
     {
         [HttpGet(nameof(GetAll))]

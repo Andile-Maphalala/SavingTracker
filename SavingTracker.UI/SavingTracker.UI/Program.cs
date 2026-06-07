@@ -1,41 +1,38 @@
-using Mapster;
-using MapsterMapper;
-using MudBlazor.Services;
-using SavingTracker.ApiClient;
+
+using Microsoft.AspNetCore.DataProtection;
+using SavingTracker.UI;
 using SavingTracker.UI.Components;
-using SavingTracker.UI.Services;
-using SavingTracker.UI.Services.Interfaces;
-using System.Reflection;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddMudServices();
-builder.Services.ConfigureServices();
-var typeAdapterConfig = TypeAdapterConfig.GlobalSettings;
-// scans the assembly and gets the IRegister, adding the registration to the TypeAdapterConfig
-typeAdapterConfig.Scan(Assembly.GetExecutingAssembly());
-// register the mapper as Singleton service for my application
-var mapperConfig = new Mapper(typeAdapterConfig);
-builder.Services.AddSingleton<IMapper>(mapperConfig);
-builder.Services.AddScoped(sp =>
-{
-    var configuration = sp.GetRequiredService<IConfiguration>();
-    var baseUrl = configuration["ApiBaseUrl"];
-    var httpClient = new HttpClient { BaseAddress = new Uri(baseUrl) };
-    return new SavingTrackerApiClient(httpClient);
-});
+// ============ SERVICE REGISTRATION ============
 
-builder.Services.AddSingleton<AppCancellationService>();
-builder.Services.AddSingleton<AuthService>();
+// External libraries and frameworks
+builder.Services
+    .AddExternalServices()
+    .AddMapping();
 
+// HTTP clients for API communication
+builder.Services.AddHttpClients(builder.Configuration);
 
+// Authentication and authorization
+builder.Services.AddAuthenticationServices();
 
+// Blazor components
+builder.Services.AddBlazorComponents();
 
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents();
+// Application business logic services
+builder.Services.AddApplicationServices();
 
+// Utility services
+builder.Services.AddUtilityServices();
+var keyPath = builder.Configuration["DataProtection:KeyPath"]
+              ?? Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
+    .SetApplicationName("SavingTracker");
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -53,11 +50,16 @@ else
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+app.UseRouting();        
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
+app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(SavingTracker.UI.Client._Imports).Assembly);
 
 app.Run();
+

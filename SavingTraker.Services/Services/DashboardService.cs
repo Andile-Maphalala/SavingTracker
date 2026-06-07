@@ -7,26 +7,20 @@ using SavingTraker.App.Interfaces;
 
 namespace SavingTraker.App.Services
 {
-    public class DashboardService : IDashboardService
+    public class DashboardService(AppDbContext db) : IDashboardService
     {
-        private readonly AppDbContext _db;
-
-        public DashboardService(AppDbContext db)
-        {
-            _db = db;
-        }
 
         public async Task<DashboardSummaryDto> GetDashboardSummary(int savingPlanId, int FrequncyType, CancellationToken cancellationToken)
         {
 
             DashboardSummaryDto summary = new DashboardSummaryDto();
-            var savingsPlan = await _db.SavingsPlans.FindAsync(savingPlanId, cancellationToken);
+            var savingsPlan = await db.SavingsPlans.FindAsync(savingPlanId, cancellationToken);
             if (savingsPlan == null)
             {
                 throw new NotFoundException("Savings Plan", savingPlanId);
             }
 
-            var members = _db.Members
+            var members = db.Members
                 .Include(x => x.ContributionType)
                 .Include(x => x.Contributions)
                 .Where(m => m.SavingsPlan.Id == savingPlanId);
@@ -65,7 +59,7 @@ namespace SavingTraker.App.Services
         {
             SavingsPlanProjectionDto result = new SavingsPlanProjectionDto();
             var projection = new List<SavingsProjectionPointDto>();
-            var savingsPlan = await _db.SavingsPlans.FindAsync(savingPlanId, cancellationToken);
+            var savingsPlan = await db.SavingsPlans.FindAsync(savingPlanId, cancellationToken);
             if (savingsPlan == null)
             {
                 throw new NotFoundException("Savings Plan", savingPlanId);
@@ -73,7 +67,7 @@ namespace SavingTraker.App.Services
 
             var frequency = (ContributionFrequency)FrequncyType;
             var totalPeriods = GetTotalPeriods(savingsPlan.StartDate, frequency);
-            var members = _db.Members.Include(x => x.Contributions).Where(m => m.SavingsPlan.Id == savingPlanId);
+            var members = db.Members.Include(x => x.Contributions).Where(m => m.SavingsPlan.Id == savingPlanId);
             decimal total = members.Sum(x => x.Contributions.Sum(c => c.Amount));
             var contributionAmount = members.Sum(x => ConvertAmount(x.ContributionType.Amount, (ContributionFrequency)x.ContributionType.Frequency,frequency));
             List<decimal> convertedInterests = new List<decimal>();

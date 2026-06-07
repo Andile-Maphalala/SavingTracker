@@ -1,4 +1,4 @@
-﻿namespace SavingTracker.UI.Services.Interfaces
+﻿namespace SavingTracker.UI.Services
 {
     public class AppCancellationService
     {
