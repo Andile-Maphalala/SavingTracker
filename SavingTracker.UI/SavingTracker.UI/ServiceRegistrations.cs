@@ -122,7 +122,7 @@ namespace SavingTracker.UI
                {
                    options.LoginPath = "/login";
                    options.AccessDeniedPath = "/access-denied";
-                   options.ExpireTimeSpan = TimeSpan.FromDays(7);
+                   options.ExpireTimeSpan = TimeSpan.FromHours(1);
                    options.SlidingExpiration = true;
                    options.Events.OnRedirectToLogin = context =>
                    {

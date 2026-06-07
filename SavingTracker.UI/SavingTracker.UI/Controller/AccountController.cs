@@ -87,13 +87,5 @@ namespace SavingTracker.UI.Controller
             await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
             return LocalRedirect(returnUrl);
         }
-
-        [HttpGet("challenge")]
-        [AllowAnonymous]
-        public async Task ChallengeAuth(string redirectUri)
-        {
-            var props = new AuthenticationProperties { RedirectUri = redirectUri };
-            await HttpContext.ChallengeAsync(IdentityConstants.ApplicationScheme, props);
-        }
     }
 }

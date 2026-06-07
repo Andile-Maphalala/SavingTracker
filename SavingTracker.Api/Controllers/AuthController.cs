@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SavingTracker.Api.Models;
 using SavingTracker.Data.Models;
 using SavingTraker.App.Interfaces;
@@ -23,6 +25,7 @@ namespace SavingTracker.Api.Controllers
         /// </summary>
         /// <param name="request">The login request containing username and password.</param>
         /// <returns>Authentication response with user information if successful.</returns>
+        [EnableRateLimiting("login")]
         [HttpPost("login")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -136,8 +139,10 @@ namespace SavingTracker.Api.Controllers
         [HttpPost("register")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [Authorize]
         public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterRequestDto request)
         {
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(new AuthResponseDto 
@@ -300,33 +305,6 @@ namespace SavingTracker.Api.Controllers
                     Message = "An error occurred during logout." 
                 });
             }
-        }
-
-        /// <summary>
-        /// Gets the current authenticated user's information.
-        /// </summary>
-        /// <returns>Current user information if authenticated, otherwise null.</returns>
-        [HttpGet("me")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<UserInfoDto>> GetCurrentUser()
-        {
-            var user = await userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
-
-            var roles = await userManager.GetRolesAsync(user);
-            return Ok(new UserInfoDto
-            {
-                Id = user.Id,
-                Username = user.UserName,
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Roles = roles.ToList()
-            });
         }
     }
 }

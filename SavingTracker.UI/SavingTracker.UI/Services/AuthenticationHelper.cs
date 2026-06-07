@@ -23,9 +23,8 @@ namespace SavingTracker.UI.Services
 
                 if (!currentUri.Contains("/login"))
                 {
-                    _navigationManager.NavigateTo(
-                        $"/api/account/challenge?redirectUri={Uri.EscapeDataString(currentUri)}",
-                        forceLoad: true);
+                    var loginUrl = $"/login?returnUrl={Uri.EscapeDataString(currentUri)}";
+                    _navigationManager.NavigateTo(loginUrl, forceLoad: true);
                 }
             }
         }
