@@ -27,8 +27,9 @@ services:
       ConnectionStrings__ConnectionString: ${API_CONNECTION_STRING}
       DataProtection__KeyPath: "/app/DataProtection-Keys"
       AllowedOrigins: ${ALLOWED_ORIGINS}
+      ASPNETCORE_URLS: http://+:8081
     ports:
-      - "8080:8080"
+      - "8081:8081"
     depends_on:
       - postgres
     networks:
@@ -44,11 +45,11 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: ${BLAZOR_ENVIRONMENT}
-      ApiBaseUrl: http://savingtracker.api:8080
-      ASPNETCORE_URLS: "http://+:3000"
+      ApiBaseUrl: http://savingtracker.api:8081
+      ASPNETCORE_URLS: "http://+:3001"
       DataProtection__KeyPath: "/app/DataProtection-Keys"
     ports:
-      - "3000:3000"
+      - "3001:3001"
     depends_on:
       - savingtracker.api
     networks:
