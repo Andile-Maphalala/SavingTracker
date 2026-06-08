@@ -73,7 +73,6 @@ namespace SavingTracker.UI.Controller
                 new AuthenticationProperties
                 {
                     IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1),
                     AllowRefresh = true
                 });
 

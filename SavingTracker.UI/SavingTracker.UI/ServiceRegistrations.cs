@@ -1,5 +1,6 @@
 ﻿using Mapster;
 using MapsterMapper;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using MudBlazor.Services;
 using SavingTracker.ApiClient;
@@ -51,10 +52,12 @@ namespace SavingTracker.UI
             var apiBaseUrl = configuration["ApiBaseUrl"];
 
             services.AddScoped<CookieContainer>();
+            services.AddScoped<UnauthorizedHandler>();
             services.AddScoped(sp =>
             {
                 var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
                 var apiBaseUrl = configuration["ApiBaseUrl"];
+                var nav = sp.GetRequiredService<NavigationManager>();
 
                 var cookieContainer = new CookieContainer();
                 if (httpContext != null)
@@ -65,8 +68,9 @@ namespace SavingTracker.UI
                     }
                 }
 
-                var handler = new HttpClientHandler { CookieContainer = cookieContainer, UseCookies = true };
-                var httpClient = new HttpClient(handler) { BaseAddress = new Uri(apiBaseUrl!) };
+                var innerHandler = new HttpClientHandler { CookieContainer = cookieContainer, UseCookies = true };
+                var unauthorizedHandler = new UnauthorizedHandler(nav) { InnerHandler = innerHandler };
+                var httpClient = new HttpClient(unauthorizedHandler) { BaseAddress = new Uri(apiBaseUrl!) };
                 return new SavingTrackerApiClient(httpClient);
             });
 

@@ -17,12 +17,12 @@ namespace SavingTracker.Data.Context
             builder.HasOne(ct => ct.User)
                 .WithMany(u => u.UserSavingsPlans)
                 .HasForeignKey(ct => ct.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(ct => ct.SavingsPlan)
                 .WithMany(sp => sp.UserSavingsPlans)
                 .HasForeignKey(ct => ct.SavingsPlanId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.ClientCascade);
         }
     }
 }

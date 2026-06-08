@@ -51,7 +51,15 @@
     {
         try
         {
-            await service.UpdateUserDetails(Model, appCancellation.Token);
+            switch (FormMode)
+            {
+                case FormModeEnum.Update:
+                    await service.UpdateUserDetails(Model, appCancellation.Token);
+                    break;
+                case FormModeEnum.Delete:
+                    await service.DeleteUser(Model.Id, appCancellation.Token);
+                    break;
+            }
         }
         catch (Exception ex)
         {

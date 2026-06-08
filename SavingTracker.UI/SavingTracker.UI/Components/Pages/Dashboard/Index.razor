@@ -21,10 +21,10 @@
     <MudGrid>
         <MudGrid>
             <MudItem xs="12" sm="6">
-                <AutoSelect TValue="int" Value="SelectedPlanId" Items="SavingPlanList" Label="Savings Plan" For="@(() => SelectedPlanId)" Variant="Variant.Outlined" ValueChanged="OnSavingSelect" />
+                <AutoSelect TValue="int" Value="SelectedPlanId" Items="SavingPlanList" Label="Savings Plan" For="@(() => SelectedPlanId)" Variant="Variant.Outlined" ValueChanged="OnSavingSelect" Disabled="@Loading" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <AutoSelect TValue="int" Value="SelectedFreqency" Items="Frequencies" Label="Frequency" For="@(() => SelectedFreqency)" Variant="Variant.Outlined" ValueChanged="OnFrequencySelect" />
+                <AutoSelect TValue="int" Value="SelectedFreqency" Items="Frequencies" Label="Frequency" For="@(() => SelectedFreqency)" Variant="Variant.Outlined" ValueChanged="OnFrequencySelect" Disabled="@Loading" />
             </MudItem>
         </MudGrid>
         @if (SelectedPlanId != 0)
@@ -76,6 +76,8 @@
 
     private string FrequenyName { get; set; } = "Monthly";
 
+    private bool Loading { get; set; } = true;
+
 
     private List<AutotableActionVisibilityModel> ActionVisibilities { get; set; } = new List<AutotableActionVisibilityModel>();
 
@@ -97,6 +99,7 @@
         if (firstRender)
         {
             await RefreshDashboard();
+            await InvokeAsync(StateHasChanged);
         }
     }
     private async Task Actions(ActionModel<MemberDashboardSummaryModel> item)
@@ -117,6 +120,10 @@
 
     private async Task<List<MemberDashboardSummaryModel>> LoadData()
     {
+        if (SelectedPlanId == 0)
+        {
+            return new List<MemberDashboardSummaryModel>();
+        }
         Data = await service.GetDashboardSummary(SelectedPlanId, SelectedFreqency, appCancellation.Token);
         return Data.MemberSummaries;
     }
@@ -138,8 +145,8 @@
     {
         var saving = await savingPlanService.GetAll(appCancellation.Token);
         SavingPlanList = saving.Select(x => new LookUpModel { Id = x.Id, Name = x.Name }).ToList();        
-        Frequencies = contributionTypeservice.GetContributionFrequenyList();
-
+        Frequencies = await contributionTypeservice.GetContributionFrequenyList(appCancellation.Token);
+        Loading = false;
     }
 
     private async Task RefreshDashboard()

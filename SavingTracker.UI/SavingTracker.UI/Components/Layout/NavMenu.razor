@@ -49,7 +49,7 @@
 
         try
         {
-            await JSRuntime.InvokeVoidAsync("submitLogoutForm", appCancellation.Token);
+            NavManager.NavigateTo("/logout");
         }
         catch (TaskCanceledException)
         {
@@ -63,19 +63,3 @@
         }
     }
 }
-
-
-<script>
-    window.submitLogoutForm = function() {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/api/account/logout';
-        var input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'returnUrl';
-        input.value = '/login';
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-    };
-</script>

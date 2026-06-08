@@ -1,7 +1,6 @@
 ﻿@using SavingTracker.UI.Models.CRUDs
 @using SavingTracker.UI.Models.Enums
 @using SavingTracker.UI.Models.Lookups
-@using SavingTracker.UI.Services.Interfaces
 @using SavingTraker.App.Interfaces
 
 @inject IContributionTypeService service
@@ -37,7 +36,7 @@
     {
         if (firstRender)
         {
-            Frequencies = service.GetContributionFrequenyList();
+            Frequencies = await service.GetContributionFrequenyList(appCancellation.Token);
             await InvokeAsync(StateHasChanged);
         }
     }
