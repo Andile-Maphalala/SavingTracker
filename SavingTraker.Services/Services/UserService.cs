@@ -11,6 +11,24 @@ namespace SavingTraker.App.Services
 {
     public class UserService(IUserInfo userInfo, UserManager<ApplicationUser> userManager) : IUserService
     {
+        public async Task DeleteUser(string id, CancellationToken cancellationToken)
+        {
+            if(!userInfo.IsAdmin())
+            {
+                throw new Exception("Access denied. Tried to perform unauthorized action.");
+            }
+            var user = await userManager.FindByIdAsync(id);
+            if(user == null)
+            {
+                throw new NotFoundException("User", id);
+            }
+            var result = await userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                throw new Exception(result.Errors.Select(e => e.Description).Aggregate((a, b) => a + ", " + b));
+            }
+        }
+
         public async Task<UserDetailsDto> GetUserDetails(string id, CancellationToken cancellationToken)
         {
             if(!userInfo.IsAdmin())

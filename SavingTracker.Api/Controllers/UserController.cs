@@ -78,5 +78,19 @@ namespace SavingTracker.Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpDelete(nameof(DeleteUserAsync))]
+        public async Task<ActionResult> DeleteUserAsync(string id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await service.DeleteUser(id, cancellationToken);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

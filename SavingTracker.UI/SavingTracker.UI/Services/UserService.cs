@@ -7,6 +7,11 @@ namespace SavingTracker.UI.Services
 {
     public class UserService(SavingTrackerApiClient apiClient, IMapper mapper) : IUserService
     {
+        public async Task DeleteUser(string id, CancellationToken cancellationToken)
+        {
+            await apiClient.ApiUserDeleteUserAsync(id, cancellationToken);
+        }
+
         public async Task<UserDetailsModel> GetUserDetails(string id, CancellationToken cancellationToken)
         {
             var dto = await apiClient.ApiUserGetUserDetailsAsync(id, cancellationToken);

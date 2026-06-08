@@ -10,5 +10,6 @@ namespace SavingTraker.App.Interfaces
        Task UpdateUserDetails(UserDetailsDto userDetails, CancellationToken cancellationToken);
        Task UpdateUserPassword(UserPasswordDto userPassword, CancellationToken cancellationToken);
        Task UpdateUserRole(UserRoleDto userRole, CancellationToken cancellationToken);
+       Task DeleteUser(string id, CancellationToken cancellationToken);
     }
 }
