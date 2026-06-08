@@ -35,7 +35,7 @@ services:
     networks:
       - savingtracker-net
     volumes:
-     - dataprotection-keys:/app/DataProtection-Keys
+     - ./Keys:/app/DataProtection-Keys
 
   savingtracker.ui:
     build:
@@ -55,7 +55,7 @@ services:
     networks:
       - savingtracker-net
     volumes:
-      - dataprotection-keys:/app/DataProtection-Keys
+      - ./Keys:/app/DataProtection-Keys
 
 volumes:
   pgdata:
