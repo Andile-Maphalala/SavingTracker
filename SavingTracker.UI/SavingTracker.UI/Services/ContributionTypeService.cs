@@ -28,10 +28,10 @@ namespace SavingTracker.UI.Services
             return mappedResult;
         }
 
-        public List<LookUpModel> GetContributionFrequenyList()
+        public async Task<List<LookUpModel>> GetContributionFrequenyList(CancellationToken cancellationToken)
         {
-            var result = apiClient.ApiContributionTypeGetContributionFrequenyListAsync();
-            var mappedResult = mapper.Map<List<LookUpModel>>(result.Result);
+            var result = await apiClient.ApiContributionTypeGetContributionFrequenyListAsync(cancellationToken);
+            var mappedResult = mapper.Map<List<LookUpModel>>(result);
             return mappedResult;
         }
 

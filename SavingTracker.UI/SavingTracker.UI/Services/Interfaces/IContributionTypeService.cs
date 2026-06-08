@@ -9,6 +9,6 @@ namespace SavingTraker.App.Interfaces
        Task<ContributionTypeModel?> GetById(int Id, CancellationToken cancellationToken);
        Task<int> UpSert(ContributionTypeModel model, CancellationToken cancellationToken);
        Task<int> Delete(int Id, CancellationToken cancellationToken);
-       List<LookUpModel> GetContributionFrequenyList();
+       Task<List<LookUpModel>> GetContributionFrequenyList(CancellationToken cancellationToken);
     }
 }

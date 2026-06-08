@@ -1,0 +1,47 @@
+﻿@page "/logout"
+@attribute [AllowAnonymous]
+@inject IJSRuntime JSRuntime
+@layout EmptyLayout
+
+@using Microsoft.AspNetCore.Authorization
+@using SavingTracker.UI.Components.Layout
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="py-8">
+    <MudPaper Class="pa-6" Elevation="3">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+            Saving Tracker
+        </MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6">
+            Family Savings Management
+        </MudText>
+
+        <MudStack AlignItems="AlignItems.Center" Class="py-4">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <MudText Typo="Typo.body2" Class="mt-3">Signing you out...</MudText>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("submitLogoutForm");
+        }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+    }
+}
+
+<script>
+    window.submitLogoutForm = function () {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/account/logout';
+        document.body.appendChild(form);
+        form.submit();
+    };
+</script>
