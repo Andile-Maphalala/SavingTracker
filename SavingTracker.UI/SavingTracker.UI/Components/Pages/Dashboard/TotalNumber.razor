@@ -1,23 +1,25 @@
-﻿<MudPaper Elevation="2" Class="pa-4 d-flex flex-column"
-          Style=@($"height: 100px; background:{ComponentColor}; color:white;")>
-
-    <div class="d-flex justify-content-between align-items-center">
-        <MudText Class="font-weight-bold">@Description @DateTime.Now.ToShortDateString()</MudText>
-        <MudIcon Icon="@Icon" Size="Size.Large" />
-    </div>
-
-    <div class="d-flex justify-content-end align-items-center" style="font-size: 3em;">
-        @if (IsLoaded)
-        {
-            <span>@Total</span>
-        }
-        else
-        {
-            <MudProgressLinear Color="Color.Dark" Indeterminate="true" Class="w-1/2" />
-        }
-    </div>
+﻿<MudPaper Elevation="0" Class="pa-4 metric-card"
+          Style="border-radius: 12px; background: #16213e; border: 1px solid rgba(255,255,255,0.05);">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+        <MudStack>
+            <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;">
+                @Description
+            </MudText>
+            <MudText Typo="Typo.h4" Style="font-weight:600; color: white;">
+                @if (IsLoaded)
+                {
+                    @Total
+                }
+                else
+                {
+                    <MudProgressLinear Color="Color.Default" Indeterminate="true" />
+                }
+            </MudText>
+        </MudStack>
+        <MudIcon Icon="@Icon" Size="Size.Medium"
+                 Style="@($"color: {ComponentColor}; font-size: 42px; opacity: 0.9;")" />
+    </MudStack>
 </MudPaper>
-
 
 @code {
     [Parameter]

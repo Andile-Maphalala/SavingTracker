@@ -1,16 +1,24 @@
-﻿
-<MudPaper Elevation="2" Class="pa-4" Style=@($"height: 100px;background:{ComponentColor};color: white;")>
-    <MudText><b>@Description @DateTime.Now.ToShortDateString()</b></MudText>
-    <MudText Align="Align.Right" Style="font-size: 3em;">
-       R @if(IsLoaded)
-        {
-            @TotalValue.ToString("N0")
-        }
-        else
-        {
-            <MudProgressLinear Color="Color.Dark" Indeterminate="true" Class="my-7" />
-        }
-    </MudText>
+﻿<MudPaper Elevation="0" Class="pa-4 metric-card"
+          Style="border-radius: 12px; background: #16213e; border: 1px solid rgba(255,255,255,0.05);">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+        <MudStack>
+            <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;">
+                @Description
+            </MudText>
+            <MudText Typo="Typo.h4" Style="font-weight:600; color: white;">
+                @if (IsLoaded)
+                {
+                    @($"R {TotalValue:N0}")
+                }
+                else
+                {
+                    <MudProgressLinear Color="Color.Default" Indeterminate="true" />
+                }
+            </MudText>
+        </MudStack>
+        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Medium"
+                 Style="@($"color: {ComponentColor}; font-size: 42px; opacity: 0.9;")" />
+    </MudStack>
 </MudPaper>
 
 @code {

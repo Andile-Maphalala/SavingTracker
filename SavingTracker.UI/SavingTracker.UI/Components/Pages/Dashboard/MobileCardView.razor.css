@@ -1,0 +1,82 @@
+﻿::deep .mobile-cards-container {
+    padding: 4px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+::deep .mobile-card {
+    background: #16213e;
+    border-radius: 12px;
+    transition: all 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+::deep .mobile-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+    ::deep .mobile-card-row:last-of-type {
+        border-bottom: none;
+    }
+
+::deep .mobile-card-label {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 1;
+}
+
+::deep .mobile-card-value {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+    text-align: right;
+    word-break: break-word;
+    max-width: 60%;
+    flex: 2;
+}
+
+::deep .mobile-card-actions {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 12px;
+    margin-top: 8px;
+}
+
+::deep .mobile-action-button {
+    margin: 2px;
+}
+
+    ::deep .mobile-action-button ::deep .mud-button {
+        padding: 6px 12px !important;
+        font-size: 0.8rem !important;
+    }
+
+/* Custom scrollbar for mobile */
+::deep .mobile-cards-container::-webkit-scrollbar {
+    width: 3px;
+}
+
+::deep .mobile-cards-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+::deep .mobile-cards-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+/* Better touch targets */
+::deep .mobile-card {
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+    ::deep .mobile-card:active {
+        transform: scale(0.99);
+    }

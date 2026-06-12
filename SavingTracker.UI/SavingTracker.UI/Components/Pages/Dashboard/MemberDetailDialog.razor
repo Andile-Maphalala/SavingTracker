@@ -1,23 +1,77 @@
 ﻿@using SavingTracker.UI.Models.Summary
+@inject IJSRuntime JSRuntime
+
 <MudDialog>
     <DialogContent>
-
-        <MudPaper Class="p-4">
-            <AutoTable TItem="ContributionSummaryModel" LoadData="LoadData" ShowAllActionsExceptBulk="false"/>
-        </MudPaper>
+        <MudContainer Class="pa-0" MaxWidth="MaxWidth.False">
+            <MudPaper Class="pa-2 pa-sm-4">
+                <MudText Typo="Typo.h6" Class="mb-3 d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.ListAlt" Class="mr-2" />
+                    Contribution Details
+                    @if (IsMobile)
+                    {
+                        <MudChip T="int" Size="Size.Small" Color="Color.Primary" Class="ml-2">@Data.Count items</MudChip>
+                    }
+                </MudText>
+                
+                @if (IsMobile)
+                {
+                    <MobileCardView TItem="ContributionSummaryModel" 
+                                    Data="Data" 
+                                    IsLoading="false" />
+                }
+                else
+                {
+                    <div class="responsive-table-container">
+                        <AutoTable TItem="ContributionSummaryModel" 
+                                  LoadData="LoadData" 
+                                  ShowAllActionsExceptBulk="false"
+                                  Dense="true" />
+                    </div>
+                }
+            </MudPaper>
+        </MudContainer>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Close" Color="Color.Primary">Close</MudButton>
+        <MudButton OnClick="Close" 
+                   Color="Color.Primary" 
+                   Variant="@(IsMobile ? Variant.Filled : Variant.Text)"
+                   FullWidth="@IsMobile"
+                   Size="@(IsMobile ? Size.Large : Size.Medium)">
+            Close
+        </MudButton>
     </DialogActions>
 </MudDialog>
-@code {
 
+@code {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
 
     [Parameter]
     public List<ContributionSummaryModel> Data { get; set; } = new List<ContributionSummaryModel>();
+    
+    private bool IsMobile { get; set; } = false;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CheckIfMobile();
+            StateHasChanged();
+        }
+    }
+
+    private async Task CheckIfMobile()
+    {
+        try
+        {
+            IsMobile = await JSRuntime.InvokeAsync<bool>("checkIsMobile");
+        }
+        catch
+        {
+            IsMobile = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth") < 641;
+        }
+    }
 
     void Close() => MudDialog.Close();
 
@@ -25,7 +79,4 @@
     {
         return Data;
     }
-
-
-
 }

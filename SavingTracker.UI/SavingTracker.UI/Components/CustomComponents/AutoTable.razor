@@ -19,7 +19,10 @@ else
               Hover="Hover"
               Bordered="Bordered"
               Striped="Striped"
-              Filter="DynamicFilter">
+              Filter="DynamicFilter"
+              Elevation="0"
+              Class="autotable-dark"
+              Style="">
         <HeaderContent>
             @foreach (var column in VisibleColumns)
             {
@@ -114,7 +117,7 @@ else
     public bool Hover { get; set; } = true;
 
     [Parameter] 
-    public bool Bordered { get; set; } = true;
+    public bool Bordered { get; set; } = false;
 
     [Parameter] 
     public bool Striped { get; set; } = true;
@@ -261,7 +264,7 @@ else
             {
                 builder.OpenComponent<MudButton>(0);
                 builder.AddAttribute(1, "Color", Color.Info);
-                builder.AddAttribute(2, "Variant", Variant.Filled);
+                builder.AddAttribute(2, "Variant", Variant.Outlined);
                 builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnAction.InvokeAsync(new ActionModel<TItem> { Item = item, Mode = FormModeEnum.View })));
                 builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Visibility);
                 builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
@@ -277,7 +280,7 @@ else
             {
                 builder.OpenComponent<MudButton>(0);
                 builder.AddAttribute(1, "Color", Color.Primary);
-                builder.AddAttribute(2, "Variant", Variant.Filled);
+                builder.AddAttribute(2, "Variant", Variant.Outlined);
                 builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, (MouseEventArgs e) => OnAction.InvokeAsync(new ActionModel<TItem> { Item = item, Mode = FormModeEnum.Update })));
                 builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Edit);
                 builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>
@@ -293,7 +296,7 @@ else
             {
                 builder.OpenComponent<MudButton>(0);
                 builder.AddAttribute(1, "Color", Color.Error);
-                builder.AddAttribute(2, "Variant", Variant.Filled);
+                builder.AddAttribute(2, "Variant", Variant.Outlined);
                 builder.AddAttribute(3, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnAction.InvokeAsync(new ActionModel<TItem> { Item = item, Mode = FormModeEnum.Delete })));
                 builder.AddAttribute(4, "StartIcon", Icons.Material.Filled.Delete);
                 builder.AddAttribute(5, "ChildContent", (RenderFragment)(b =>

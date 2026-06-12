@@ -3,11 +3,10 @@
 @inject NavigationManager NavigationManager
 @inject AuthenticationHelper authHelper
 
-<MudThemeProvider />
+<MudThemeProvider Theme="_theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-
 
 <CascadingAuthenticationState>
     <AuthorizeView>
@@ -31,8 +30,28 @@
     </AuthorizeView>
 </CascadingAuthenticationState>
 
-
 @code {
-
-
+    private MudTheme _theme = new MudTheme
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#639922",
+            PrimaryDarken = "#3B6D11",
+            PrimaryLighten = "#C0DD97",
+            Secondary = "#378ADD",
+            Tertiary = "#1D9E75",
+            Background = "#F5F5F5",
+            Surface = "#FFFFFF",
+            AppbarBackground = "#0d1b2e",
+            DrawerBackground = "#0d1b2e",
+            DrawerText = "rgba(255,255,255,0.7)",
+            TextPrimary = "#1a1a1a",
+            TextSecondary = "#6b7280",
+            TableLines = "#e5e7eb",
+            TableStriped = "#fafafa",
+            TableHover = "#f3f4f6",
+            Divider = "#e5e7eb",
+            OverlayLight = "rgba(0,0,0,0.4)",
+        }
+    };
 }
