@@ -14,44 +14,63 @@
 @inject IDialogService dialogService
 @inject ISavingsPlanService savingPlanService
 @inject IContributionTypeService contributionTypeservice
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Dashboard</PageTitle>
 
-<MudContainer Class="mt-5 px-4" MaxWidth="MaxWidth.False">
-    <MudGrid>
-        <MudGrid>
-            <MudItem xs="12" sm="6">
-                <AutoSelect TValue="int" Value="SelectedPlanId" Items="SavingPlanList" Label="Savings Plan" For="@(() => SelectedPlanId)" Variant="Variant.Outlined" ValueChanged="OnSavingSelect" Disabled="@Loading" />
-            </MudItem>
-            <MudItem xs="12" sm="6">
-                <AutoSelect TValue="int" Value="SelectedFreqency" Items="Frequencies" Label="Frequency" For="@(() => SelectedFreqency)" Variant="Variant.Outlined" ValueChanged="OnFrequencySelect" Disabled="@Loading" />
-            </MudItem>
-        </MudGrid>
+<MudContainer Class="mt-4 px-4" MaxWidth="MaxWidth.False">
+
+    @* Single date header instead of date on every card *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudText Typo="Typo.h6" Style="font-weight:500;">Dashboard</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">@DateTime.Now.ToLongDateString()</MudText>
+    </MudStack>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" sm="6">
+            <AutoSelect TValue="int" Value="SelectedPlanId" Items="SavingPlanList" Label="Savings Plan" For="@(() => SelectedPlanId)" Variant="Variant.Outlined" ValueChanged="OnSavingSelect" Disabled="@Loading" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <AutoSelect TValue="int" Value="SelectedFreqency" Items="Frequencies" Label="Frequency" For="@(() => SelectedFreqency)" Variant="Variant.Outlined" ValueChanged="OnFrequencySelect" Disabled="@Loading" />
+        </MudItem>
+
         @if (SelectedPlanId != 0)
         {
-            <MudItem xs="12" sm="6" md="3">
-                <TotalNumber Total="Data.TotalMembers" Description="Total Members" ComponentColor="@Colors.Blue.Default" />
+            <MudItem xs="12">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="4" lg="2">
+                        <TotalNumber Total="Data.TotalMembers" Description="Total Members" ComponentColor="@Colors.Blue.Default" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4" lg="2">
+                        <Total TotalValue="Data.TotalContribution" Description="Total Contribution" ComponentColor="@Colors.Green.Default" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4" lg="2">
+                        <Total TotalValue="Data.TotalOutstandingAmount" Description="Total Outstanding" ComponentColor="@Colors.Red.Default" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4" lg="3">
+                        <Total TotalValue="Data.PeriodIncome" Description="@PeriodDescription" ComponentColor="@Colors.Amber.Default" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4" lg="3">
+                        <TotalNumber Total="Data.TotalPeriods" Description="Total Periods" ComponentColor="@Colors.Cyan.Default" Icon="@Icons.Material.Filled.CalendarMonth" />
+                    </MudItem>
+                </MudGrid>
             </MudItem>
-
-            <MudItem xs="12" sm="6" md="3">
-                <Total TotalValue="Data.TotalContribution" Description="Total Contribution" ComponentColor="@Colors.Green.Default" />
-            </MudItem>
-
-            <MudItem xs="12" sm="6" md="3">
-                <Total TotalValue="Data.TotalOutstandingAmount" Description="Total Outstanding" ComponentColor="@Colors.Red.Default" />
-            </MudItem>
-
-            <MudItem xs="12" sm="6" md="3">
-                <Total TotalValue="Data.PeriodIncome" Description="@PeriodDescription" ComponentColor="@Colors.Amber.Default" />
-            </MudItem>
-             <MudItem xs="12" sm="12" md="12">
-                <TotalNumber Total="Data.TotalPeriods" Description="Total Periods" ComponentColor="@Colors.Cyan.Default"  Icon="@Icons.Material.Filled.CalendarMonth"/>
-            </MudItem>
-            <MudItem xs="12" sm="12" md="12">
-                <AutoTable @ref="tableRef" TItem="MemberDashboardSummaryModel" OnAction="Actions" LoadData="LoadData" ShowAllActionsExceptBulk="false" ActionVisibilities="ActionVisibilities"/>
+            <MudItem xs="12">
+                @if (IsMobile)
+                {
+                    <MobileCardView TItem="MemberDashboardSummaryModel"
+                                    Data="Data.MemberSummaries"
+                                    IsLoading="Loading" 
+                                    OnRowClick="Actions" />
+                }
+                else
+                {
+                    <div class="responsive-table-container">
+                        <AutoTable @ref="tableRef" TItem="MemberDashboardSummaryModel" OnAction="Actions" LoadData="LoadData" ShowAllActionsExceptBulk="false" ActionVisibilities="ActionVisibilities" />
+                    </div>
+                }
             </MudItem>
         }
-
     </MudGrid>
 </MudContainer>
 
@@ -77,7 +96,7 @@
     private string FrequenyName { get; set; } = "Monthly";
 
     private bool Loading { get; set; } = true;
-
+    private bool IsMobile { get; set; } = false;
 
     private List<AutotableActionVisibilityModel> ActionVisibilities { get; set; } = new List<AutotableActionVisibilityModel>();
 
@@ -98,6 +117,7 @@
     {
         if (firstRender)
         {
+            await CheckIfMobile();
             await RefreshDashboard();
             await InvokeAsync(StateHasChanged);
         }
@@ -111,6 +131,22 @@
         };
 
         var dialog = await dialogService.ShowAsync<MemberDetailDialog>( $" Contributions For {item.Item.MemberName}", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+        }
+    }
+
+    private async Task Actions(MemberDashboardSummaryModel item)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<MemberDetailDialog>
+        {
+            { x => x.Data, item.AllContributions },
+        };
+
+        var dialog = await dialogService.ShowAsync<MemberDetailDialog>($" Contributions For {item.MemberName}", parameters, options);
         var result = await dialog.Result;
 
         if (!result.Canceled)
@@ -161,4 +197,17 @@
 
         tableRef?.RefreshTable();
     }
+    private async Task CheckIfMobile()
+    {
+        try
+        {
+            IsMobile = await JSRuntime.InvokeAsync<bool>("checkIsMobile");
+        }
+        catch
+        {
+            // Fallback to checking window width
+            IsMobile = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth") < 641;
+        }
+    }
+
 }

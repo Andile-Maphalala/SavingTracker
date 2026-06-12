@@ -8,10 +8,10 @@ namespace SavingTracker.UI.Models.Summary
         [CustomColumn(DisplayName = "EndDate", Order = 0,Visible = false)]
         public int MemberId { get; set; }
 
-        [CustomColumn(DisplayName = "Full Name", Order = 1)]
+        [CustomColumn(DisplayName = "Name", Order = 1)]
         public string MemberName { get; set; }
 
-        [CustomColumn(DisplayName = "Total ContributedAmount", Order = 2, FormatString = "N2")]
+        [CustomColumn(DisplayName = "Total Contributed", Order = 2, FormatString = "N2")]
         public decimal TotalContributedAmount { get; set; }
 
         [CustomColumn(DisplayName = "Oustanding Amount", Order = 3, FormatString = "N2")]

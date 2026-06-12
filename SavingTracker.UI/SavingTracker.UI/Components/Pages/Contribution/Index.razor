@@ -35,7 +35,7 @@
 
         if (item.Mode == Models.Enums.FormModeEnum.Create)
         {
-            item.Item = new ContributionModel();
+            item.Item = new ContributionModel { Date = DateTime.Now };
         }
 
         IDialogReference dialog;

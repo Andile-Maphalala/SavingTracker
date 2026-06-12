@@ -21,7 +21,7 @@ namespace SavingTraker.App.Services
                     MemberName = c.Member.FullName,
                     Date = c.Date,
                     Amount = c.Amount
-                }).ToListAsync(cancellationToken);
+                }).OrderByDescending(c => c.Date).ToListAsync(cancellationToken);
         }
 
         public async Task<List<ContributionDto>> GetAllByMemberId(int memberId, CancellationToken cancellationToken)
@@ -35,7 +35,7 @@ namespace SavingTraker.App.Services
                     MemberName = c.Member.FullName,
                     Date = c.Date,
                     Amount = c.Amount
-                }).ToListAsync(cancellationToken);
+                }).OrderByDescending(c => c.Date).ToListAsync(cancellationToken);
         }
 
         public async Task<ContributionDto> GetById(int Id, CancellationToken cancellationToken)

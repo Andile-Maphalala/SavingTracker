@@ -1,0 +1,141 @@
+﻿@using System.Reflection
+@using SavingTracker.UI.Models.Common
+@typeparam TItem
+
+@if (IsLoading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+else if (!Data.Any())
+{
+    <MudAlert Severity="Severity.Info" Class="my-4">No data available</MudAlert>
+}
+else
+{
+    <div class="mobile-cards-container">
+        @foreach (var item in Data)
+        {
+            <MudPaper Class="mobile-card mb-3 pa-3" Elevation="2" @onclick="() => OnRowClick.InvokeAsync(item)">
+                @foreach (var column in VisibleColumns)
+                {
+                    var value = column.PropertyInfo.GetValue(item);
+                    var displayValue = !string.IsNullOrEmpty(column.FormatString)
+                        ? string.Format("{0:" + column.FormatString + "}", value)
+                        : value?.ToString() ?? "-";
+
+                    <div class="mobile-card-row">
+                        <span class="mobile-card-label">@column.DisplayName:</span>
+                        <span class="mobile-card-value">
+                            @if (column.PropertyInfo.PropertyType == typeof(decimal) ||
+                                 column.PropertyInfo.PropertyType == typeof(decimal?))
+                            {
+                                <MudText Style="font-weight:500; color: #97C459;">
+                                    @displayValue
+                                </MudText>
+                            }
+                            else
+                            {
+                                @displayValue
+                            }
+                        </span>
+                    </div>
+                }
+
+                @if (CrudColumn != null && CrudColumn.Any())
+                {
+                    <div class="mobile-card-actions">
+                        <MudStack Row="true"
+                                  Spacing="1"
+                                  Justify="Justify.FlexEnd"
+                                  Wrap="Wrap.Wrap">
+                            @foreach (var action in CrudColumn)
+                            {
+                                <div class="mobile-action-button">
+                                    @action(item)
+                                </div>
+                            }
+                        </MudStack>
+                    </div>
+                }
+            </MudPaper>
+        }
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public IEnumerable<TItem>? Data { get; set; } = new List<TItem>();
+
+    [Parameter]
+    public List<RenderFragment<TItem>>? CrudColumn { get; set; }
+
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    [Parameter]
+    public EventCallback<TItem> OnRowClick { get; set; }
+
+    private List<ColumnDefinition> VisibleColumns = new();
+
+    protected override void OnInitialized()
+    {
+        LoadColumnsFromAttributes();
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Reload columns if needed (in case of type change, though TItem is fixed)
+        if (VisibleColumns.Count == 0)
+        {
+            LoadColumnsFromAttributes();
+        }
+    }
+
+    private void LoadColumnsFromAttributes()
+    {
+        var properties = typeof(TItem).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        var columns = new List<ColumnDefinition>();
+
+        foreach (var prop in properties)
+        {
+            var customColumnAttr = prop.GetCustomAttribute<CustomColumnAttribute>();
+
+            // Only include columns that are visible (default to true if attribute not present)
+            bool isVisible = customColumnAttr?.Visible ?? true;
+
+            if (isVisible)
+            {
+                columns.Add(new ColumnDefinition
+                {
+                    DisplayName = customColumnAttr?.DisplayName ?? FormatPropertyName(prop.Name),
+                    PropertyInfo = prop,
+                    FormatString = customColumnAttr?.FormatString ?? string.Empty,
+                    Order = customColumnAttr?.Order ?? 999,
+                    Visible = isVisible,
+                    Sortable = customColumnAttr?.Sortable ?? false
+                });
+            }
+        }
+
+        // Sort by Order
+        VisibleColumns = columns.OrderBy(c => c.Order).ToList();
+    }
+
+    private string FormatPropertyName(string name)
+    {
+        // Convert PascalCase to readable format
+        return System.Text.RegularExpressions.Regex.Replace(name, "(?<=[a-z])([A-Z])", " $1");
+    }
+
+    public class ColumnDefinition
+    {
+        public string DisplayName { get; set; } = string.Empty;
+        public PropertyInfo PropertyInfo { get; set; } = null!;
+        public string FormatString { get; set; } = string.Empty;
+        public bool Visible { get; set; } = true;
+        public int Order { get; set; } = 0;
+        public bool Sortable { get; set; } = false;
+    }
+}

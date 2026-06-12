@@ -49,3 +49,28 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+
+.autotable-dark {
+    background-color: #16213e;
+}
+
+    .autotable-dark .mud-table-root,
+    .autotable-dark .mud-table-container,
+    .autotable-dark .mud-table-toolbar,
+    .autotable-dark thead,
+    .autotable-dark tbody tr {
+        background-color: #16213e !important;
+    }
+
+    .autotable-dark th {
+        color: rgba(255,255,255,.7) !important;
+    }
+
+    .autotable-dark td {
+        color: rgba(255,255,255,.9) !important;
+    }
+
+    .autotable-dark tbody tr:hover {
+        background-color: rgba(255,255,255,.05) !important;
+    }

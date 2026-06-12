@@ -81,7 +81,7 @@
 
     private void AddRow()
     {
-        Models.Add(new ContributionModel());
+        Models.Add(new ContributionModel { Date = DateTime.Now });
     }
 
     private void Duplicate(ContributionModel item)
