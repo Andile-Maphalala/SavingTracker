@@ -76,6 +76,9 @@ else
     [Parameter]
     public EventCallback<TItem> OnRowClick { get; set; }
 
+    [Parameter]
+    public List<ColumnDefinition>? ExternalVisibleColumns { get; set; }
+
     private List<ColumnDefinition> VisibleColumns = new();
 
     protected override void OnInitialized()
@@ -85,8 +88,12 @@ else
 
     protected override void OnParametersSet()
     {
-        // Reload columns if needed (in case of type change, though TItem is fixed)
-        if (VisibleColumns.Count == 0)
+        // Use external columns if provided, otherwise load from attributes
+        if (ExternalVisibleColumns != null && ExternalVisibleColumns.Any())
+        {
+            VisibleColumns = ExternalVisibleColumns;
+        }
+        else if (VisibleColumns.Count == 0)
         {
             LoadColumnsFromAttributes();
         }
@@ -107,15 +114,7 @@ else
 
             if (isVisible)
             {
-                columns.Add(new ColumnDefinition
-                {
-                    DisplayName = customColumnAttr?.DisplayName ?? FormatPropertyName(prop.Name),
-                    PropertyInfo = prop,
-                    FormatString = customColumnAttr?.FormatString ?? string.Empty,
-                    Order = customColumnAttr?.Order ?? 999,
-                    Visible = isVisible,
-                    Sortable = customColumnAttr?.Sortable ?? false
-                });
+                columns.Add(new ColumnDefinition(prop));
             }
         }
 
@@ -127,15 +126,5 @@ else
     {
         // Convert PascalCase to readable format
         return System.Text.RegularExpressions.Regex.Replace(name, "(?<=[a-z])([A-Z])", " $1");
-    }
-
-    public class ColumnDefinition
-    {
-        public string DisplayName { get; set; } = string.Empty;
-        public PropertyInfo PropertyInfo { get; set; } = null!;
-        public string FormatString { get; set; } = string.Empty;
-        public bool Visible { get; set; } = true;
-        public int Order { get; set; } = 0;
-        public bool Sortable { get; set; } = false;
     }
 }

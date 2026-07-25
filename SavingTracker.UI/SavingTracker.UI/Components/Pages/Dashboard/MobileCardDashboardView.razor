@@ -1,0 +1,126 @@
+﻿@using System.Linq.Expressions
+@using System.Reflection
+@using SavingTracker.UI.Models.Common
+@using SavingTracker.UI.Models.Summary
+
+@inject IDialogService dialogService
+
+
+@if (Data ==  null || !Data.Any())
+{
+<MudAlert Severity="Severity.Info" Class="my-4">No data available</MudAlert>
+}
+else
+{
+<div class="mobile-cards-container">
+    @foreach (var item in Data)
+    {
+            <MudPaper Class="mobile-card mb-3 pa-3" Elevation="2" @onclick="() => Actions(item)">
+
+                <MemberCardRow IsHeading="true"
+                               Icon="@Icons.Material.Filled.Person"
+                               Value="@item.MemberName"
+                               ShowOutstandingStatus="true"
+                               OutstandingAmount="@item.OustandingAmount" />
+                <MemberCardRow Icon="fas fa-wallet"
+                               Label="Contributed Amount"
+                               Value="@item.TotalContributedAmount" 
+                               TextColor="@green"
+                               FormatString="@GetFormatString(x => x.TotalContributedAmount)" />
+                <MemberCardRow Icon="fas fa-exclamation-triangle"
+                               Label="Outstanding Amount"
+                               Value="@item.OustandingAmount"
+                               TextColor="@GetColor(item.OustandingAmount)"
+                               FormatString="@GetFormatString(x => x.OustandingAmount)" />
+                <MemberCardRow Icon="@Icons.Material.Filled.CalendarMonth"
+                               Label="Next Payment Date"
+                               Value="@item.NextExpectedDate"
+                               FormatString="@GetFormatString(x => x.NextExpectedDate)" />
+                <MemberCardRow Icon="fas fa-calendar-check"
+                               Label="Periods Paid"
+                               Value="@GetPeriodString(item.PeriodsPaid)" />
+
+            @foreach (var column in VisibleColumns)
+            {
+                var value = column.PropertyInfo.GetValue(item);
+                var displayValue = !string.IsNullOrEmpty(column.FormatString)
+                    ? string.Format("{0:" + column.FormatString + "}", value)
+                    : value?.ToString() ?? "-";
+
+                <div class="mobile-card-row">
+                    <span class="mobile-card-label">@column.DisplayName:</span>
+                    <span class="mobile-card-value">
+                        @if (column.PropertyInfo.PropertyType == typeof(decimal) ||
+                             column.PropertyInfo.PropertyType == typeof(decimal?))
+                        {
+                            <MudText Style="font-weight:500; color: #97C459;">
+                                @displayValue
+                            </MudText>
+                        }
+                        else
+                        {
+                            @displayValue
+                        }
+                    </span>
+                </div>
+            }
+        </MudPaper>
+    }
+</div>
+}
+
+@code {
+    [Parameter]
+    public IEnumerable<MemberDashboardSummaryModel> Data { get; set; } = new List<MemberDashboardSummaryModel>();
+
+    [Parameter]
+    public int TotalPeriods { get; set; }
+
+    private List<ColumnDefinition> VisibleColumns = new();
+
+    private async Task Actions(MemberDashboardSummaryModel item)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<MemberDetailDialog>
+        {
+            { x => x.Data, item.AllContributions },
+        };
+
+        var dialog = await dialogService.ShowAsync<MemberDetailDialog>($" Contributions For {item.MemberName}", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+        }
+    }
+
+    private string? GetFormatString<TProperty>(Expression<Func<MemberDashboardSummaryModel, TProperty>> expression)
+    {
+        if (expression.Body is MemberExpression memberExpression)
+        {
+            var property = (PropertyInfo)memberExpression.Member;
+            var formatstring = property.GetCustomAttribute<CustomColumnAttribute>()?.FormatString;
+            return formatstring;
+        }
+
+        return null;
+    }
+
+    private string GetPeriodString(int periodsPaid)
+    {
+        return $"{periodsPaid} / {TotalPeriods}";
+    }
+
+    private string GetColor(decimal amount)
+    {
+        if (amount == 0.00m)
+        {
+            return green;
+        }
+
+        return red;
+    }
+
+    private const string red = "F44336";
+    private const string green = "97C459";
+}

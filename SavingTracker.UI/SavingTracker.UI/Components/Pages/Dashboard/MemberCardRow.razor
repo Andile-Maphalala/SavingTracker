@@ -1,0 +1,84 @@
+﻿@using MudBlazor;
+
+<div class="mobile-card-row @(IsHeading ? "heading-row" : "")">
+    @if (IsHeading)
+    {
+        if(!string.IsNullOrEmpty(Icon))
+        {
+            <MudIcon Icon="@Icon" Color="@Color.Secondary" />
+        }
+        <span class="mobile-card-header">@Value</span>
+        @if (ShowOutstandingStatus)
+        {
+            <div class="status-icon">
+                @if (OutstandingAmount == 0)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Color="Color.Error" />
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <span class="mobile-card-label">
+            @if(!string.IsNullOrEmpty(Icon))
+            {
+                <MudIcon Icon="@Icon" Color="@Color.Secondary" />
+            }
+            @Label:
+            </span>
+        <span class="mobile-card-value">
+            @if (!string.IsNullOrEmpty(FormatString))
+            {
+                <MudText Style="@GetStyle()">
+                    @string.Format("{0:" + FormatString + "}", Value)
+                </MudText>
+            }
+            else
+            {
+                @Value
+            }
+        </span>
+    }
+
+</div>
+
+@code {
+
+    [Parameter]
+    public bool IsHeading { get; set; } = false;
+
+    [Parameter]
+    public string Icon { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter]
+    public object Value { get; set; } = string.Empty;
+
+    [Parameter]
+    public string TextColor { get; set; } = string.Empty;
+
+    [Parameter]
+    public string FormatString { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowOutstandingStatus { get; set; } = false;
+
+    [Parameter]
+    public decimal OutstandingAmount { get; set; } = 0;
+
+    private string GetStyle()
+    {
+        if (!string.IsNullOrEmpty(TextColor))
+        {
+            return $"font-weight:500; color: #{TextColor};";
+        }
+        return "font-weight:500;";
+    }
+}

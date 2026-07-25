@@ -42,7 +42,7 @@ namespace SavingTraker.App.Services
                         Id = c.Id,
                         Date = c.Date,
                         Amount = c.Amount
-                    }).ToList();
+                    }).OrderByDescending(c => c.Date).ToList();
                 summary.MemberSummaries.Add(dto);
             }
             summary.TotalMembers = summary.MemberSummaries.Count;
