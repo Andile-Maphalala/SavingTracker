@@ -23,7 +23,7 @@ namespace SavingTracker.UI.Models.Summary
         [CustomColumn(DisplayName = "Period Fee", Order = 6, FormatString = "N2")]
         public decimal PeriodFee { get; set; }
 
-        [CustomColumn(DisplayName = "Next Payment Date", Order = 5, FormatString = "dd/MM/yyyy")]
+        [CustomColumn(DisplayName = "Next Payment Date", Order = 5, FormatString = "dd MMMM yyyy")]
         public DateTime NextExpectedDate { get; set; }
 
 

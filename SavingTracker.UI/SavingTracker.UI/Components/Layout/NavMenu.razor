@@ -16,15 +16,15 @@
         <MudText Class="nav-section-label">Menu</MudText>
         <div class="nav-item px-2">
             <AuthorizeView>
-                <NavLink class="nav-link" href="/dashboard" Match="NavLinkMatch.All">
+                <NavLink class="nav-link" href="/dashboard" Match="NavLinkMatch.All" @onclick="CloseMenuOnMobile">
                     <MudIcon Icon="@Icons.Material.Filled.Dashboard" Class="nav-icon" />
                     Dashboard
                 </NavLink>
-                <NavLink class="nav-link" href="/contribution">
+                <NavLink class="nav-link" href="/contribution" @onclick="CloseMenuOnMobile">
                     <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Class="nav-icon" />
                     Contributions
                 </NavLink>
-                <NavLink class="nav-link" href="/contributiontype">
+                <NavLink class="nav-link" href="/contributiontype" @onclick="CloseMenuOnMobile">
                     <MudIcon Icon="@Icons.Material.Filled.Category" Class="nav-icon" />
                     Contribution type
                 </NavLink>
@@ -35,15 +35,15 @@
             <div class="nav-divider"></div>
             <MudText Class="nav-section-label">Admin</MudText>
             <div class="nav-item px-2">
-                <NavLink class="nav-link" href="/savingsplans">
+                <NavLink class="nav-link" href="/savingsplans" @onclick="CloseMenuOnMobile">
                     <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Class="nav-icon" />
                     Savings plan
                 </NavLink>
-                <NavLink class="nav-link" href="/members">
+                <NavLink class="nav-link" href="/members" @onclick="CloseMenuOnMobile">
                     <MudIcon Icon="@Icons.Material.Filled.Group" Class="nav-icon" />
                     Members
                 </NavLink>
-                <NavLink class="nav-link" href="/users">
+                <NavLink class="nav-link" href="/users" @onclick="CloseMenuOnMobile">
                     <MudIcon Icon="@Icons.Material.Filled.ManageAccounts" Class="nav-icon" />
                     Users
                 </NavLink>
@@ -100,6 +100,11 @@
         }
     }
 
+    private async Task CloseMenuOnMobile()
+    {
+        await JSRuntime.InvokeVoidAsync("closeMenuOnMobile");
+    }
+
 }
 
 <script>
@@ -138,19 +143,18 @@
         // Handle window resize
         window.addEventListener('resize', handleResize);
 
-        // Close menu when clicking nav links on mobile
-        var navLinks = navScrollable.querySelectorAll('.nav-link');
-        navLinks.forEach(function(link) {
-            link.addEventListener('click', function() {
-                if (window.innerWidth < 641 && toggler.checked) {
-                    toggler.checked = false;
-                    navScrollable.style.display = 'none';
-                }
-            });
-        });
-
         // Initial call
         handleResize();
+    };
+
+    window.closeMenuOnMobile = function() {
+        var toggler = document.getElementById('nav-toggler');
+        var navScrollable = document.querySelector('.nav-scrollable');
+
+        if (window.innerWidth < 641 && toggler && toggler.checked) {
+            toggler.checked = false;
+            navScrollable.style.display = 'none';
+        }
     };
 
     // Initialize when DOM is ready
