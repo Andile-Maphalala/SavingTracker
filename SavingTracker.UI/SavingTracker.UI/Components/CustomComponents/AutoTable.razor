@@ -2,11 +2,13 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
+@using SavingTracker.UI.Components.Pages.Dashboard
 @using SavingTracker.UI.Models.Common
 @using SavingTracker.UI.Models.Enums
 @using SavingTracker.UI.Services
 @typeparam TItem
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
 
 @if (IsLoading)
 {
@@ -14,15 +16,55 @@
 }
 else
 {
-    <MudTable Items="Data"
-              Dense="Dense"
-              Hover="Hover"
-              Bordered="Bordered"
-              Striped="Striped"
-              Filter="DynamicFilter"
-              Elevation="0"
-              Class="autotable-dark"
-              Style="">
+
+    @if(IsMobile)
+    {
+        <div class="mobile-table-wrapper">
+            <div class="mobile-toolbar">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <AuthorizeView Roles="Admin">
+                            @if (ToolBarContentActions != null)
+                            {
+                                @ToolBarContentActions
+                            }
+                            else
+                            {
+                                @if (ShouldShowAction(FormModeEnum.Create))
+                                {
+                                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="Add" Size="Size.Small" Class="mb-2">Add</MudButton>
+                                }
+                                @if (ShouldShowAction(FormModeEnum.BulkCreate))
+                                {
+                                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" OnClick="BulkAdd" Size="Size.Small" Class="mb-2">Bulk Add</MudButton>
+                                }
+                            }
+                        </AuthorizeView>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Variant="Variant.Outlined" Density="Density.Compact"></MudTextField>
+                    </MudItem>
+                </MudGrid>
+            </div>
+            <MobileCardModalView TItem="TItem" 
+                                 Data="GetFilteredData()" 
+                                 IsLoading="IsLoading"
+                                 ExternalVisibleColumns="VisibleColumns"
+                                 CrudColumn="CrudColumn"
+                                 OnRowClick="OnMobileRowClick" />
+        </div>
+    }
+    else
+    {
+        <MudTable Items="Data"
+                  Dense="Dense"
+                  Hover="Hover"
+                  Bordered="Bordered"
+                  Striped="Striped"
+                  Filter="DynamicFilter"
+                  Elevation="0"
+                  Class="autotable-dark"
+                  Style="">
         <HeaderContent>
             @foreach (var column in VisibleColumns)
             {
@@ -98,7 +140,8 @@ else
 
             }
         </RowTemplate>
-    </MudTable>
+        </MudTable>
+    }
 }
 
 
@@ -142,7 +185,7 @@ else
 
 
     private bool IsLoading { get; set; } = true;
-
+    private bool IsMobile { get; set; } = false;
     private string searchString { get; set; } = string.Empty;
 
     private List<PropertyInfo> SearchableProps = new();
@@ -151,6 +194,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await CheckIfMobile();  
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var roles = authState.User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value);
         if(roles.Contains("Admin"))
@@ -318,6 +362,32 @@ else
             return visibility.IsVisible;
         }
         return false;
+    }
+
+    private async Task CheckIfMobile()
+    {
+        try
+        {
+            IsMobile = await JSRuntime.InvokeAsync<bool>("checkIsMobile");
+        }
+        catch
+        {
+            // Fallback to checking window width
+            IsMobile = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth") < 641;
+        }
+    }
+
+    private IEnumerable<TItem> GetFilteredData()
+    {
+        if (Data == null)
+            return new List<TItem>();
+
+        return Data.Where(item => DynamicFilter(item)).ToList();
+    }
+
+    private async Task OnMobileRowClick(TItem item)
+    {
+        await Task.CompletedTask;
     }
 
 }
