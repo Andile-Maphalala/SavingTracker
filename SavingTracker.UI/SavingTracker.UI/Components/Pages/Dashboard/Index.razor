@@ -39,19 +39,19 @@
             <MudItem xs="12">
                 <MudGrid Spacing="2">
                     <MudItem xs="12" sm="6" md="4" lg="2">
-                        <TotalNumber Total="Data.TotalMembers" Description="Total Members" ComponentColor="@Colors.Blue.Default" />
+                        <TotalNumber Total="Data.TotalMembers" Description="Members" ComponentColor="@Colors.Blue.Default" />
                     </MudItem>
                     <MudItem xs="12" sm="6" md="4" lg="2">
-                        <Total TotalValue="Data.TotalContribution" Description="Total Contribution" ComponentColor="@Colors.Green.Default" />
+                        <Total TotalValue="Data.TotalContribution" Description="Saved" ComponentColor="@Colors.Green.Default" />
                     </MudItem>
                     <MudItem xs="12" sm="6" md="4" lg="2">
-                        <Total TotalValue="Data.TotalOutstandingAmount" Description="Total Outstanding" ComponentColor="@Colors.Red.Default" />
+                        <Total TotalValue="Data.TotalOutstandingAmount" Description="Outstanding" ComponentColor="@Colors.Red.Default" />
                     </MudItem>
                     <MudItem xs="12" sm="6" md="4" lg="3">
                         <Total TotalValue="Data.PeriodIncome" Description="@PeriodDescription" ComponentColor="@Colors.Amber.Default" />
                     </MudItem>
                     <MudItem xs="12" sm="6" md="4" lg="3">
-                        <TotalNumber Total="Data.TotalPeriods" Description="Total Periods" ComponentColor="@Colors.Cyan.Default" Icon="@Icons.Material.Filled.CalendarMonth" />
+                        <TotalNumber Total="Data.TotalPeriods" Description="Periods" ComponentColor="@Colors.Cyan.Default" Icon="@Icons.Material.Filled.CalendarMonth" />
                     </MudItem>
                 </MudGrid>
             </MudItem>
@@ -90,7 +90,7 @@
 
     private SavingsPlanModel SelectedPlan { get; set; }
 
-    private string FrequenyName { get; set; } = "Monthly";
+    private string FrequencyName { get; set; } = "Monthly";
 
     private bool Loading { get; set; } = true;
     private bool IsMobile { get; set; } = false;
@@ -100,8 +100,6 @@
     protected override async Task OnInitializedAsync()
     {
         ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.View, IsVisible = true });
-
-        PeriodDescription = $"{FrequenyName} Inome";
 
         await LoadDropdownData();
         SelectedPlanId = SavingPlanList.FirstOrDefault()?.Id ?? 0;
@@ -170,7 +168,7 @@
     private async Task OnFrequencySelect(int value)
     {
         SelectedFreqency = value;
-        FrequenyName = Frequencies.Where(x => x.Id == value).Select(x => x.Name).FirstOrDefault();
+        FrequencyName = Frequencies.Where(x => x.Id == value).Select(x => x.Name).FirstOrDefault();
         await RefreshDashboard();    
     }
 
@@ -188,7 +186,7 @@
 
         Data = await service.GetDashboardSummary(SelectedPlanId, SelectedFreqency, appCancellation.Token);
 
-        PeriodDescription = $"{FrequenyName} Income";
+        PeriodDescription = $"{FrequencyName} Expected Income";
 
         await InvokeAsync(StateHasChanged);
 

@@ -39,6 +39,10 @@ else
                 <MemberCardRow Icon="fas fa-calendar-check"
                                Label="Periods Paid"
                                Value="@GetPeriodString(item.PeriodsPaid)" />
+                <MemberCardRow Icon="fas fa-hand-holding-usd"
+                               Label="Period Fee"
+                               Value="@item.PeriodFee" 
+                               FormatString="@GetFormatString(x => x.PeriodFee)" />
 
             @foreach (var column in VisibleColumns)
             {
