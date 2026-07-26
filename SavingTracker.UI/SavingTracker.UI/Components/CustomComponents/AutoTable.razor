@@ -243,8 +243,6 @@ else
         {
             AddCrudColumnButtons();
         }
-        IsLoading = false;
-
     }
 
     public async Task RefreshTable()
@@ -262,7 +260,10 @@ else
             }
             finally
             {
-                IsLoading = false;
+                if (Data != null)
+                {
+                    IsLoading = false;
+                }
             }
         }
 

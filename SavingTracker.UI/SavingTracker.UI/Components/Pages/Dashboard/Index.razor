@@ -28,44 +28,76 @@
 
     <MudGrid Spacing="2">
         <MudItem xs="12" sm="6">
-            <AutoSelect TValue="int" Value="SelectedPlanId" Items="SavingPlanList" Label="Savings Plan" For="@(() => SelectedPlanId)" Variant="Variant.Outlined" ValueChanged="OnSavingSelect" Disabled="@Loading" />
+            <AutoSelect TValue="int" Value="SelectedPlanId" Items="SavingPlanList" Label="Savings Plan" For="@(() => SelectedPlanId)" Variant="Variant.Outlined" ValueChanged="OnSavingSelect" Disabled="@DropdownLoading" />
         </MudItem>
         <MudItem xs="12" sm="6">
-            <AutoSelect TValue="int" Value="SelectedFreqency" Items="Frequencies" Label="Frequency" For="@(() => SelectedFreqency)" Variant="Variant.Outlined" ValueChanged="OnFrequencySelect" Disabled="@Loading" />
+            <AutoSelect TValue="int" Value="SelectedFreqency" Items="Frequencies" Label="Frequency" For="@(() => SelectedFreqency)" Variant="Variant.Outlined" ValueChanged="OnFrequencySelect" Disabled="@DropdownLoading" />
         </MudItem>
 
         @if (SelectedPlanId != 0)
         {
             <MudItem xs="12">
                 <MudGrid Spacing="2">
-                    <MudItem xs="12" sm="6" md="4" lg="2">
-                        <TotalNumber Total="Data.TotalMembers" Description="Members" ComponentColor="@Colors.Blue.Default" />
-                    </MudItem>
-                    <MudItem xs="12" sm="6" md="4" lg="2">
-                        <Total TotalValue="Data.TotalContribution" Description="Saved" ComponentColor="@Colors.Green.Default" />
-                    </MudItem>
-                    <MudItem xs="12" sm="6" md="4" lg="2">
-                        <Total TotalValue="Data.TotalOutstandingAmount" Description="Outstanding" ComponentColor="@Colors.Red.Default" />
-                    </MudItem>
-                    <MudItem xs="12" sm="6" md="4" lg="3">
-                        <Total TotalValue="Data.PeriodIncome" Description="@PeriodDescription" ComponentColor="@Colors.Amber.Default" />
-                    </MudItem>
-                    <MudItem xs="12" sm="6" md="4" lg="3">
-                        <TotalNumber Total="Data.TotalPeriods" Description="Periods" ComponentColor="@Colors.Cyan.Default" Icon="@Icons.Material.Filled.CalendarMonth" />
-                    </MudItem>
+
+                    @if (Loading)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="2">
+                            <CardSkeleton />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="2">
+                            <CardSkeleton />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="2">
+                            <CardSkeleton />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <CardSkeleton />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <CardSkeleton />
+                        </MudItem>
+                    }
+                    else
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="2">
+                            <TotalNumber Total="Data.TotalMembers" Description="Members" ComponentColor="@Colors.Blue.Default" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="2">
+                            <Total TotalValue="Data.TotalContribution" Description="Saved" ComponentColor="@Colors.Green.Default" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="2">
+                            <Total TotalValue="Data.TotalOutstandingAmount" Description="Outstanding" ComponentColor="@Colors.Red.Default" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <Total TotalValue="Data.PeriodIncome" Description="@PeriodDescription" ComponentColor="@Colors.Amber.Default" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <TotalNumber Total="Data.TotalPeriods" Description="Periods" ComponentColor="@Colors.Cyan.Default" Icon="@Icons.Material.Filled.CalendarMonth" />
+                        </MudItem>
+                    }
                 </MudGrid>
             </MudItem>
             <MudItem xs="12">
-                @if (IsMobile)
-                {
-                    <MobileCardDashboardView Data="Data.MemberSummaries" TotalPeriods="Data.TotalPeriods"/>
-                }
-                else
-                {
-                    <div class="responsive-table-container">
-                        <AutoTable @ref="tableRef" TItem="MemberDashboardSummaryModel" OnAction="Actions" LoadData="LoadData" ShowAllActionsExceptBulk="false" ActionVisibilities="ActionVisibilities" />
-                    </div>
-                }
+                    @if (IsMobile)
+                    {
+                        @if (Loading)
+                        {
+                                <MudItem xs="12" sm="12" md="12" lg="12">
+                                    <CardSkeleton />
+                                </MudItem>
+                        }
+                        else
+                        {
+                            <MobileCardDashboardView Data="Data.MemberSummaries" TotalPeriods="Data.TotalPeriods" />
+
+                        }
+                    }
+                    else
+                    {
+                        <div class="responsive-table-container">
+                            <AutoTable @ref="tableRef" TItem="MemberDashboardSummaryModel" OnAction="Actions" LoadData="LoadData" ShowAllActionsExceptBulk="false" ActionVisibilities="ActionVisibilities" />
+                        </div>
+                    }
             </MudItem>
         }
     </MudGrid>
@@ -92,19 +124,19 @@
 
     private string FrequencyName { get; set; } = "Monthly";
 
+    private bool DropdownLoading { get; set; } = true;
     private bool Loading { get; set; } = true;
     private bool IsMobile { get; set; } = false;
 
     private List<AutotableActionVisibilityModel> ActionVisibilities { get; set; } = new List<AutotableActionVisibilityModel>();
 
+    private List<int> LoadingRows { get; } = Enumerable.Range(0, 5).ToList();
+
     protected override async Task OnInitializedAsync()
     {
         ActionVisibilities.Add(new AutotableActionVisibilityModel { Mode = FormModeEnum.View, IsVisible = true });
-
-        await LoadDropdownData();
-        SelectedPlanId = SavingPlanList.FirstOrDefault()?.Id ?? 0;
+        await CheckIfMobile();
         await InvokeAsync(StateHasChanged);
-
     }
 
 
@@ -112,7 +144,12 @@
     {
         if (firstRender)
         {
-            await CheckIfMobile();
+            await LoadDropdownData();
+            SelectedPlanId = SavingPlanList.FirstOrDefault()?.Id ?? 0;
+            if (SelectedPlanId != 0)
+            {
+                PeriodDescription = $"{FrequencyName} Expected Income";
+            }
             await RefreshDashboard();
             await InvokeAsync(StateHasChanged);
         }
@@ -155,7 +192,6 @@
         {
             return new List<MemberDashboardSummaryModel>();
         }
-        Data = await service.GetDashboardSummary(SelectedPlanId, SelectedFreqency, appCancellation.Token);
         return Data.MemberSummaries;
     }
 
@@ -177,20 +213,26 @@
         var saving = await savingPlanService.GetAll(appCancellation.Token);
         SavingPlanList = saving.Select(x => new LookUpModel { Id = x.Id, Name = x.Name }).ToList();        
         Frequencies = await contributionTypeservice.GetContributionFrequenyList(appCancellation.Token);
-        Loading = false;
+        DropdownLoading = false;
     }
 
     private async Task RefreshDashboard()
     {
         if (SelectedPlanId == 0) return;
 
+        Loading = true;
+        await InvokeAsync(StateHasChanged);
+
         Data = await service.GetDashboardSummary(SelectedPlanId, SelectedFreqency, appCancellation.Token);
 
         PeriodDescription = $"{FrequencyName} Expected Income";
 
+        Loading = false;
+        if(!IsMobile)
+        {
+            tableRef?.RefreshTable();
+        }
         await InvokeAsync(StateHasChanged);
-
-        tableRef?.RefreshTable();
     }
     private async Task CheckIfMobile()
     {
