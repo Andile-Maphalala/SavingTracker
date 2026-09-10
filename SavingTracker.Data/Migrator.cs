@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SavingTracker.Data.Context;
 using SavingTracker.Data.Models;
@@ -18,6 +19,7 @@ namespace SavingTracker.Data
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
                 // Apply migrations
                 if (scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.GetPendingMigrations().Count() > 0)
@@ -46,8 +48,8 @@ namespace SavingTracker.Data
                         EmailConfirmed = true,
                         IsActive = true
                     };
-
-                    var result = await userManager.CreateAsync(user, "Admin@123");
+                    var adminPassword = configuration["Seed:AdminPassword"] ?? throw new InvalidOperationException("Seed:AdminPassword must be configured");
+                    var result = await userManager.CreateAsync(user, adminPassword);
                     if (result.Succeeded)
                     {
                         await userManager.AddToRoleAsync(user, "Admin");
