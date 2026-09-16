@@ -1,5 +1,6 @@
 ﻿@using System.Reflection
 @using SavingTracker.UI.Models.Common
+@using SavingTracker.UI.Services.Helpers
 @typeparam TItem
 
 @if (IsLoading)
@@ -29,7 +30,7 @@ else
                             @if (column.PropertyInfo.PropertyType == typeof(decimal) ||
                                  column.PropertyInfo.PropertyType == typeof(decimal?))
                             {
-                                <MudText Style="font-weight:500; color: #97C459;">
+                                <MudText Style="@GetDecimalStyle(value, column.PropertyInfo)">
                                     @displayValue
                                 </MudText>
                             }
@@ -127,4 +128,18 @@ else
         // Convert PascalCase to readable format
         return System.Text.RegularExpressions.Regex.Replace(name, "(?<=[a-z])([A-Z])", " $1");
     }
+
+    private string GetDecimalStyle(object? value, PropertyInfo property)
+    {
+        var attr = property.GetCustomAttribute<CustomColumnAttribute>();
+        var color = ColorHelper.Black;
+
+        if (attr?.ConditionalColor != null)
+        {
+            color = attr.ConditionalColor;
+        }
+
+        return $"font-weight:500; color:{color};";
+    } 
+
 }

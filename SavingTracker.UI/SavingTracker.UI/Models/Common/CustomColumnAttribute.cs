@@ -11,6 +11,8 @@ namespace SavingTracker.UI.Models.Common
         public string? FormatString { get; set; }
         public bool Searchable { get; set; } = true;
         public bool Sortable { get; set; } = true;
+        public string? ConditionalColor { get; set; }
+
         public CustomColumnAttribute()
         {
         }
