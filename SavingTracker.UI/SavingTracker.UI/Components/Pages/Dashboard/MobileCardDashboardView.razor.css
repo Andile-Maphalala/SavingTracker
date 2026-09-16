@@ -80,3 +80,15 @@
     ::deep .mobile-card:active {
         transform: scale(0.99);
     }
+
+.filter-chips {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+}
+
+.mobile-toolbar {
+    flex-wrap: nowrap;
+}

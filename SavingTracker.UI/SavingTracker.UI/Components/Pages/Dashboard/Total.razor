@@ -1,4 +1,4 @@
-﻿<MudPaper Elevation="0" Class="pa-4 metric-card"
+﻿<MudPaper Elevation="0" Class="pa-4 metric-card" @onclick="() => HandleClick()"
           Style="border-radius: 12px; background: #16213e; border: 1px solid rgba(255,255,255,0.05);">
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
         <MudStack>
@@ -31,10 +31,21 @@
     [Parameter]
     public string ComponentColor { get; set; }
 
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
     private bool IsLoaded = false;
 
     protected override void OnParametersSet()
     {
         IsLoaded = true;
+    }
+
+    private void HandleClick()
+    {
+        if (OnClick.HasDelegate)
+        {
+            OnClick.InvokeAsync(null);
+        }
     }
 }

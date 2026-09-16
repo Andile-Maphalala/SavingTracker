@@ -1,20 +1,43 @@
 ﻿@using System.Linq.Expressions
 @using System.Reflection
 @using SavingTracker.UI.Models.Common
+@using SavingTracker.UI.Models.Enums
 @using SavingTracker.UI.Models.Summary
 
 @inject IDialogService dialogService
 
 
-@if (Data ==  null || !Data.Any())
+@if (Data == null || !Data.Any())
 {
-<MudAlert Severity="Severity.Info" Class="my-4">No data available</MudAlert>
+    <MudAlert Severity="Severity.Info" Class="my-4">No data available</MudAlert>
 }
 else
 {
-<div class="mobile-cards-container">
-    @foreach (var item in Data)
-    {
+
+    <div class="mobile-toolbar d-flex align-center gap-2 mb-2">
+        <MudTextField T="string" @bind-Value="SearchTerm" @bind-Value:after="ApplyFilters"
+                      Placeholder="Search members..." Immediate="true"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1" />
+
+        <MudMenu Icon="@Icons.Material.Filled.Sort" Dense="true">
+            <MudMenuItem OnClick="@(() => SetSort(SortFieldEnum.Name))">Name</MudMenuItem>
+            <MudMenuItem OnClick="@(() => SetSort(SortFieldEnum.Outstanding))">Outstanding Amount</MudMenuItem>
+            <MudMenuItem OnClick="@(() => SetSort(SortFieldEnum.NextPayment))">Next Payment Date</MudMenuItem>
+        </MudMenu>
+    </div>
+
+    <div class="filter-chips mb-3">
+        <MudChip T="string" Text="All" Variant="@(CurrentFilter == StatusFilterEnum.All ? Variant.Filled : Variant.Outlined)"
+                 Color="Color.Primary" OnClick="@(() => SetFilter(StatusFilterEnum.All))" />
+        <MudChip T="string" Text="Outstanding" Variant="@(CurrentFilter == StatusFilterEnum.Outstanding ? Variant.Filled : Variant.Outlined)"
+                 Color="Color.Error" OnClick="@(() => SetFilter(StatusFilterEnum.Outstanding))" />
+        <MudChip T="string" Text="Paid Up" Variant="@(CurrentFilter == StatusFilterEnum.PaidUp ? Variant.Filled : Variant.Outlined)"
+                 Color="Color.Success" OnClick="@(() => SetFilter(StatusFilterEnum.PaidUp))" />
+    </div>
+    <div class="mobile-cards-container">
+        @foreach (var item in FilteredData)
+        {
             <MudPaper Class="mobile-card mb-3 pa-3" Elevation="2" @onclick="() => Actions(item)">
 
                 <MemberCardRow IsHeading="true"
@@ -24,7 +47,7 @@ else
                                OutstandingAmount="@item.OustandingAmount" />
                 <MemberCardRow Icon="fas fa-wallet"
                                Label="Contributed Amount"
-                               Value="@item.TotalContributedAmount" 
+                               Value="@item.TotalContributedAmount"
                                TextColor="@green"
                                FormatString="@GetFormatString(x => x.TotalContributedAmount)" />
                 <MemberCardRow Icon="fas fa-exclamation-triangle"
@@ -41,36 +64,36 @@ else
                                Value="@GetPeriodString(item.PeriodsPaid)" />
                 <MemberCardRow Icon="fas fa-hand-holding-usd"
                                Label="Period Fee"
-                               Value="@item.PeriodFee" 
+                               Value="@item.PeriodFee"
                                FormatString="@GetFormatString(x => x.PeriodFee)" />
 
-            @foreach (var column in VisibleColumns)
-            {
-                var value = column.PropertyInfo.GetValue(item);
-                var displayValue = !string.IsNullOrEmpty(column.FormatString)
-                    ? string.Format("{0:" + column.FormatString + "}", value)
-                    : value?.ToString() ?? "-";
+                @foreach (var column in VisibleColumns)
+                {
+                    var value = column.PropertyInfo.GetValue(item);
+                    var displayValue = !string.IsNullOrEmpty(column.FormatString)
+                        ? string.Format("{0:" + column.FormatString + "}", value)
+                        : value?.ToString() ?? "-";
 
-                <div class="mobile-card-row">
-                    <span class="mobile-card-label">@column.DisplayName:</span>
-                    <span class="mobile-card-value">
-                        @if (column.PropertyInfo.PropertyType == typeof(decimal) ||
-                             column.PropertyInfo.PropertyType == typeof(decimal?))
-                        {
-                            <MudText Style="font-weight:500; color: #97C459;">
+                    <div class="mobile-card-row">
+                        <span class="mobile-card-label">@column.DisplayName:</span>
+                        <span class="mobile-card-value">
+                            @if (column.PropertyInfo.PropertyType == typeof(decimal) ||
+                                 column.PropertyInfo.PropertyType == typeof(decimal?))
+                            {
+                                <MudText Style="font-weight:500; color: #97C459;">
+                                    @displayValue
+                                </MudText>
+                            }
+                            else
+                            {
                                 @displayValue
-                            </MudText>
-                        }
-                        else
-                        {
-                            @displayValue
-                        }
-                    </span>
-                </div>
-            }
-        </MudPaper>
-    }
-</div>
+                            }
+                        </span>
+                    </div>
+                }
+            </MudPaper>
+        }
+    </div>
 }
 
 @code {
@@ -81,6 +104,17 @@ else
     public int TotalPeriods { get; set; }
 
     private List<ColumnDefinition> VisibleColumns = new();
+    private StatusFilterEnum CurrentFilter { get; set; } = StatusFilterEnum.All;
+    private SortFieldEnum CurrentSort { get; set; } = SortFieldEnum.Name;
+    private bool SortDescending = false;
+    private string SearchTerm = string.Empty;
+
+    private List<MemberDashboardSummaryModel> FilteredData = new();
+
+    protected override void OnParametersSet()
+    {
+        ApplyFilters();
+    }
 
     private async Task Actions(MemberDashboardSummaryModel item)
     {
@@ -96,6 +130,69 @@ else
         if (!result.Canceled)
         {
         }
+    }
+
+    private void SetFilter(StatusFilterEnum filter)
+    {
+        CurrentFilter = filter;
+        ApplyFilters();
+    }
+
+    private void SetSort(SortFieldEnum field)
+    {
+        if (CurrentSort == field)
+            SortDescending = !SortDescending;
+        else
+        {
+            CurrentSort = field;
+            SortDescending = false;
+        }
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<MemberDashboardSummaryModel> query = Data ?? new List<MemberDashboardSummaryModel>();
+
+        switch (CurrentFilter)
+        {
+            case StatusFilterEnum.Outstanding:
+                query = query.Where(x => x.OustandingAmount > 0);
+                break;
+            case StatusFilterEnum.PaidUp:
+                query = query.Where(x => x.OustandingAmount == 0);
+                break;
+        }
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+            query = query.Where(x => x.MemberName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+
+        switch (CurrentSort)
+        {
+            case SortFieldEnum.Outstanding:
+                query = SortDescending
+                    ? query.OrderByDescending(x => x.OustandingAmount)
+                    : query.OrderBy(x => x.OustandingAmount);
+                break;
+            case SortFieldEnum.NextPayment:
+                query = SortDescending
+                    ? query.OrderByDescending(x => x.NextExpectedDate)
+                    : query.OrderBy(x => x.NextExpectedDate);
+                break;
+            case SortFieldEnum.Name:
+                query = SortDescending
+                    ? query.OrderByDescending(x => x.MemberName)
+                    : query.OrderBy(x => x.MemberName);
+                break;
+        }
+
+        FilteredData = query.ToList();
+        StateHasChanged();
+    }
+
+    private bool IsOrderByDescending(SortFieldEnum field)
+    {
+        return CurrentSort == field && SortDescending;
     }
 
     private string? GetFormatString<TProperty>(Expression<Func<MemberDashboardSummaryModel, TProperty>> expression)

@@ -66,7 +66,7 @@
                             <Total TotalValue="Data.TotalContribution" Description="Saved" ComponentColor="@Colors.Green.Default" />
                         </MudItem>
                         <MudItem xs="12" sm="6" md="4" lg="2">
-                            <Total TotalValue="Data.TotalOutstandingAmount" Description="Outstanding" ComponentColor="@Colors.Red.Default" />
+                            <Total TotalValue="Data.TotalOutstandingAmount" Description="Outstanding" ComponentColor="@Colors.Red.Default" OnClick="ViewOutstanding" />
                         </MudItem>
                         <MudItem xs="12" sm="6" md="4" lg="3">
                             <Total TotalValue="Data.PeriodIncome" Description="@PeriodDescription" ComponentColor="@Colors.Amber.Default" />
@@ -117,10 +117,8 @@
     private List<LookUpModel> Frequencies = new List<LookUpModel>();
 
     private int SelectedPlanId { get; set; }
-
+    private string SelectedPlanName { get; set; }
     private int SelectedFreqency { get; set; } = 4;
-
-    private SavingsPlanModel SelectedPlan { get; set; }
 
     private string FrequencyName { get; set; } = "Monthly";
 
@@ -149,6 +147,7 @@
             if (SelectedPlanId != 0)
             {
                 PeriodDescription = $"{FrequencyName} Expected Income";
+                SelectedPlanName = SavingPlanList?.FirstOrDefault(x => x.Id == SelectedPlanId).Name;
             }
             await RefreshDashboard();
             await InvokeAsync(StateHasChanged);
@@ -245,6 +244,24 @@
             // Fallback to checking window width
             IsMobile = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth") < 641;
         }
+    }
+
+    private void ViewOutstanding()
+    {
+        List<MemberOutstandingSummaryModel> data = new List<MemberOutstandingSummaryModel>();
+        data = Data.MemberSummaries.Where(x => x.OustandingAmount > 0).Select(x => new MemberOutstandingSummaryModel
+        {
+            Name = x.MemberName,
+            Amount = x.OustandingAmount,
+            Date = x.NextExpectedDate
+        }).ToList();
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<MemberOutstandingDialog>
+        {
+            { x => x.Data, data },
+        };
+        dialogService.ShowAsync<MemberOutstandingDialog>($" Outstanding For {SelectedPlanName}", parameters, options);
     }
 
 }

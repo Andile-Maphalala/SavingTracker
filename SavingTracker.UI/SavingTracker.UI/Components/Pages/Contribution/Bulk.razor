@@ -1,6 +1,7 @@
 ﻿@using SavingTracker.UI.Models.CRUDs
 @using SavingTracker.UI.Models.Enums
 @using SavingTracker.UI.Models.Lookups
+@using SavingTracker.UI.Services.Helpers
 @using SavingTracker.UI.Services.Interfaces
 @using SavingTraker.App.Interfaces
 
@@ -20,7 +21,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="5">
-                <MudDatePicker @bind-Date="item.Date" Label="Transaction Date" ShowToolbar="false" />
+                <MudDatePicker @bind-Date="item.Date" Label="Transaction Date" ShowToolbar="false" DateFormat="@Model.GetDateFormat(nameof(Model.Date))" />
             </MudItem>
 
             <MudItem xs="12" sm="2" Class="d-flex align-end justify-end">

@@ -1,7 +1,7 @@
 ﻿@using SavingTracker.UI.Models.CRUDs
 @using SavingTracker.UI.Models.Enums
 @using SavingTracker.UI.Models.Lookups
-@using SavingTracker.UI.Services.Interfaces
+@using SavingTracker.UI.Services.Helpers
 @using SavingTraker.App.Interfaces
 
 @inject IContributionService service
@@ -16,7 +16,7 @@
             <MudTextField @bind-Value="Model.Amount" Label="Amount" For="@(() => Model.Amount)" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="R" />
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudDatePicker @bind-Date="Model.Date" Label="Transaction Date" ShowToolbar="false" />
+            <MudDatePicker @bind-Date="Model.Date" Label="Transaction Date" ShowToolbar="false" DateFormat="@Model.GetDateFormat(nameof(Model.Date))" />
         </MudItem>
     </MudGrid>
 </AutoForm>
