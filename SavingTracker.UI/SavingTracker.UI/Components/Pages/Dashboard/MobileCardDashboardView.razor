@@ -22,6 +22,7 @@ else
 
         <MudMenu Icon="@Icons.Material.Filled.Sort" Dense="true">
             <MudMenuItem OnClick="@(() => SetSort(SortFieldEnum.Name))">Name</MudMenuItem>
+            <MudMenuItem OnClick="@(() => SetSort(SortFieldEnum.Contribution))">Contribution</MudMenuItem>
             <MudMenuItem OnClick="@(() => SetSort(SortFieldEnum.Outstanding))">Outstanding Amount</MudMenuItem>
             <MudMenuItem OnClick="@(() => SetSort(SortFieldEnum.NextPayment))">Next Payment Date</MudMenuItem>
         </MudMenu>
@@ -183,6 +184,11 @@ else
                 query = SortDescending
                     ? query.OrderByDescending(x => x.MemberName)
                     : query.OrderBy(x => x.MemberName);
+                break;
+            case SortFieldEnum.Contribution:
+                query = SortDescending
+                    ? query.OrderByDescending(x => x.TotalContributedAmount)
+                    : query.OrderBy(x => x.TotalContributedAmount);
                 break;
         }
 

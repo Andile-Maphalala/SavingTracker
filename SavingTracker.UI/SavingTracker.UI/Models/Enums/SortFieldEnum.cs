@@ -4,6 +4,7 @@
     {
         Name, 
         Outstanding, 
-        NextPayment
+        NextPayment, 
+        Contribution
     }
 }
